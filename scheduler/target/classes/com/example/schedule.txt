@@ -1,0 +1,89 @@
+     T1   T2   T3   T4   T5   T6   T7   T8   T9   T10  T11  T12  T13  T14  T15  T16  
+T1  -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T2  65   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T3  8    39   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T4  40   71   24   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T5  20   56   37   40   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T6  47   79   63   39   48   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T7  80   72   4    67   68   42   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T8  68   33   67   30   83   67   13   -1   -2   -2   -2   -2   -2   -2   -2   -2   
+T9  67   65   82   36   52   14   78   36   -1   -2   -2   -2   -2   -2   -2   -2   
+T10 33   68   66   84   18   77   66   34   83   -1   -2   -2   -2   -2   -2   -2   
+T11 0    81   45   50   1    82   17   66   68   65   -1   -2   -2   -2   -2   -2   
+T12 33   82   81   10   65   42   49   84   81   29   73   -1   -2   -2   -2   -2   
+T13 67   35   34   67   68   35   35   84   57   83   19   3    -1   -2   -2   -2   
+T14 68   34   74   65   81   65   84   25   84   67   58   66   66   -1   -2   -2   
+T15 82   81   33   66   82   82   34   66   81   83   83   35   46   61   -1   -2   
+T16 81   68   65   83   83   62   41   9    82   65   41   66   68   67   26   -1   
+Week 1: T2 vs T1 T3 vs T1 Week 2: T3 vs T2 T4 vs T1 Week 3: T4 vs T2 T4 vs T3 Week 4: T5 vs T1 T5 vs T2 
+Week 5: T5 vs T3 T5 vs T4 Week 6: T6 vs T1 T6 vs T2 Week 7: T6 vs T3 T6 vs T4 Week 8: T6 vs T5 T7 vs T1 
+Week 9: T7 vs T2 T7 vs T3 Week 10: T7 vs T4 T7 vs T5 Week 11: T7 vs T6 T8 vs T1 Week 12: T8 vs T2 T8 vs T3 
+Week 13: T8 vs T4 T8 vs T5 Week 14: T8 vs T6 T8 vs T7 Week 15: T9 vs T1 T9 vs T2 Week 16: T9 vs T3 T9 vs T4 
+Week 17: T9 vs T5 T9 vs T6 Week 18: T9 vs T7 T9 vs T8 Week 19: T10 vs T1 T10 vs T2 Week 20: T10 vs T3 T10 vs T4 
+Week 21: T10 vs T5 T10 vs T6 Week 22: T10 vs T7 T10 vs T8 Week 23: T10 vs T9 T11 vs T2 Week 24: T11 vs T3 T11 vs T4 
+Week 25: T11 vs T5 T11 vs T6 Week 26: T11 vs T7 T11 vs T8 Week 27: T11 vs T9 T11 vs T10 Week 28: T12 vs T1 T12 vs T2 
+Week 29: T12 vs T3 T12 vs T4 Week 30: T12 vs T5 T12 vs T6 Week 31: T12 vs T7 T12 vs T8 Week 32: T12 vs T9 T12 vs T10 
+Week 33: T12 vs T11 T13 vs T1 Week 34: T13 vs T2 T13 vs T3 Week 35: T13 vs T4 T13 vs T5 Week 36: T13 vs T6 T13 vs T7 
+Week 37: T13 vs T8 T13 vs T9 Week 38: T13 vs T10 T13 vs T11 Week 39: T13 vs T12 T14 vs T1 Week 40: T14 vs T2 T14 vs T3 
+Week 41: T14 vs T4 T14 vs T5 Week 42: T14 vs T6 T14 vs T7 Week 43: T14 vs T8 T14 vs T9 Week 44: T14 vs T10 T14 vs T11 
+Week 45: T14 vs T12 T14 vs T13 Week 46: T15 vs T1 T15 vs T2 Week 47: T15 vs T3 T15 vs T4 Week 48: T15 vs T5 T15 vs T6 
+Week 49: T15 vs T7 T15 vs T8 Week 50: T15 vs T9 T15 vs T10 Week 51: T15 vs T11 T15 vs T12 Week 52: T15 vs T13 T15 vs T14 
+Week 53: T16 vs T1 T16 vs T2 Week 54: T16 vs T3 T16 vs T4 Week 55: T16 vs T5 T16 vs T6 Week 56: T16 vs T7 T16 vs T8 
+Week 57: T16 vs T9 T16 vs T10 Week 58: T16 vs T11 T16 vs T12 Week 59: T16 vs T13 T16 vs T14 Week 60: T16 vs T15 
+
+
+
+     T1   T2   T3   T4   T5   T6   T7   T8   T9   T10  T11  T12  T13  T14  T15  T16  
+T1  -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T2  65   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T3  8    39   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T4  40   71   24   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T5  20   56   37   40   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T6  47   79   63   39   48   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T7  80   72   4    67   68   42   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T8  68   33   67   30   83   67   13   -1   -2   -2   -2   -2   -2   -2   -2   -2   
+T9  67   65   82   36   52   14   78   36   -1   -2   -2   -2   -2   -2   -2   -2   
+T10 33   68   66   84   18   77   66   34   83   -1   -2   -2   -2   -2   -2   -2   
+T11 0    81   45   50   1    82   17   66   68   65   -1   -2   -2   -2   -2   -2   
+T12 33   82   81   10   65   42   49   84   81   29   73   -1   -2   -2   -2   -2   
+T13 67   35   34   67   68   35   35   84   57   83   19   3    -1   -2   -2   -2   
+T14 68   34   74   65   81   65   84   25   84   67   58   66   66   -1   -2   -2   
+T15 82   81   33   66   82   82   34   66   81   83   83   35   46   61   -1   -2   
+T16 81   68   65   83   83   62   41   9    82   65   41   66   68   67   26   -1
+
+
+
+
+
+     T1   T2   T3   T4   T5   T6   T7   T8   T9   T10  T11  T12  T13  T14  T15  T16  
+T1  -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T2  35   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T3  49   45   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T4  55   20   23   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T5  40   63   40   56   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T6  53   20   54   31   48   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T7  55   64   49   66   36   67   -1   -2   -2   -2   -2   -2   -2   -2   -2   -2   
+T8  68   65   35   35   13   50   18   -1   -2   -2   -2   -2   -2   -2   -2   -2   
+T9  51   33   65   67   68   4    57   65   -1   -2   -2   -2   -2   -2   -2   -2   
+T10 18   3    67   66   49   42   34   61   25   -1   -2   -2   -2   -2   -2   -2   
+T11 66   33   67   68   68   58   36   30   19   58   -1   -2   -2   -2   -2   -2   
+T12 65   66   65   50   68   42   36   1    62   68   36   -1   -2   -2   -2   -2   
+T13 68   66   67   52   17   66   66   46   65   17   14   35   -1   -2   -2   -2   
+T14 67   33   67   68   34   66   9    35   33   34   51   26   66   -1   -2   -2   
+T15 67   65   2    68   66   57   65   65   33   51   67   41   0    65   -1   -2   
+T16 65   52   68   34   66   34   66   67   52   41   29   10   65   50   67   -1   
+Week 1:         T2 vs T1        T3 vs T1        T3 vs T2        T4 vs T1        T4 vs T2        T4 vs T3        T5 vs T1  T5 vs T2 
+Week 5:         T5 vs T3        T5 vs T4        T6 vs T1        T6 vs T2        T6 vs T3        T6 vs T4        T6 vs T5  T7 vs T1 
+Week 9:         T7 vs T2        T7 vs T3        T7 vs T4        T7 vs T5        T7 vs T6        T8 vs T1        T8 vs T2  T8 vs T3 
+Week 13:        T8 vs T4        T8 vs T5        T8 vs T6        T8 vs T7        T9 vs T1        T9 vs T2        T9 vs T3  T9 vs T4 
+Week 17:        T9 vs T5        T9 vs T6        T9 vs T7        T9 vs T8        T10 vs T1       T10 vs T2       T10 vs T3 T10 vs T4 
+Week 21:        T10 vs T5       T10 vs T6       T10 vs T7       T10 vs T8       T10 vs T9       T11 vs T1       T11 vs T2 T11 vs T3 
+Week 25:        T11 vs T4       T11 vs T5       T11 vs T6       T11 vs T7       T11 vs T8       T11 vs T9       T11 vs T10 T12 vs T1 
+Week 29:        T12 vs T2       T12 vs T3       T12 vs T4       T12 vs T5       T12 vs T6       T12 vs T7       T12 vs T8 T12 vs T9 
+Week 33:        T12 vs T10      T12 vs T11      T13 vs T1       T13 vs T2       T13 vs T3       T13 vs T4       T13 vs T5 T13 vs T6 
+Week 37:        T13 vs T7       T13 vs T8       T13 vs T9       T13 vs T10      T13 vs T11      T13 vs T12      T14 vs T1 T14 vs T2 
+Week 41:        T14 vs T3       T14 vs T4       T14 vs T5       T14 vs T6       T14 vs T7       T14 vs T8       T14 vs T9 T14 vs T10 
+Week 45:        T14 vs T11      T14 vs T12      T14 vs T13      T15 vs T1       T15 vs T2       T15 vs T3       T15 vs T4 T15 vs T5 
+Week 49:        T15 vs T6       T15 vs T7       T15 vs T8       T15 vs T9       T15 vs T10      T15 vs T11      T15 vs T12 T15 vs T14 
+Week 53:        T16 vs T1       T16 vs T2       T16 vs T3       T16 vs T4       T16 vs T5       T16 vs T6       T16 vs T7 T16 vs T8 
+Week 57:        T16 vs T9       T16 vs T10      T16 vs T11      T16 vs T12      T16 vs T13      T16 vs T14      T16 vs T15 
