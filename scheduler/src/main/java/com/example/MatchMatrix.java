@@ -79,6 +79,7 @@ public class MatchMatrix {
     
     
     public void printMatrix() {
+
         System.out.print("     ");
         for (int i = 0; i < SIZE; i++) {
             System.out.printf("C%-4d", i + 0);
@@ -108,6 +109,9 @@ public class MatchMatrix {
     public void printMatches() {
         // Gather all valid match indexes (starting at 1) in order
         List<Integer> matchIndexes = new ArrayList<>();
+        
+        System.out.println("\t\tMain A \t\tMain B \t\tMain C \t\tMain D\t\tBP East\t\tBP West\t\tGerry East\tGerry West");
+        
         for (int k = 1; k < list.length; k++) {
             for (int i = 1; i < list.length; i++) {
                 if (list[i] == k) {
@@ -196,19 +200,6 @@ public class MatchMatrix {
             throw new IndexOutOfBoundsException("Index must be between 0 and " + ((SIZE * (SIZE + 1) / 2) - 1) + ".");
         }
         return new int[]{to_matrix_map[index][ROW], to_matrix_map[index][COL]};
-        /*int count = 1;
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                if (row != col && col < row) {
-                    if (count == index) {
-                        return new int[]{row, col}; // Return team A and team B
-                    }
-                    count++;
-                }
-            }
-        }
-        throw new IndexOutOfBoundsException("Index out of bounds.");
-        */
     }
     
     // get the index by row and col
@@ -220,19 +211,6 @@ public class MatchMatrix {
             throw new IllegalArgumentException("Cannot update diagonal or invalid team indices.");
         }
         return to_list_map[rowValue][colValue];
-        /*int count = 1;
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                if (rowValue == row && colValue == col){
-                    return count;
-                }
-                if (col < row) {
-                    count++;    
-                }
-            }
-        }
-        return 0;
-        */
     }
     
                     
@@ -242,21 +220,6 @@ public class MatchMatrix {
             throw new IndexOutOfBoundsException("Index must be between 0 and " + (TOTAL_MATCHES) + ".");
         }
         return list[index];
-        
-        /* 
-        int count = 1;
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                if (row != col && col < row) {
-                    if (count == index) {
-                        return matrix[row][col]; // Return the match value
-                    }
-                    count++;
-                }
-            }   
-        }
-        throw new IndexOutOfBoundsException("Index out of bounds.");
-        */
     }           
     
     // Create a method to set a match by index betweeo 0 and totalMatches - 1
@@ -268,22 +231,6 @@ public class MatchMatrix {
         int row = to_matrix_map[index][ROW];
         int col = to_matrix_map[index][COL];
         setMatchValueByRowCol(row, col, value);
-        /*
-        int count = 1;
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                if (row != col && col < row) {
-                    if (count == index) {
-                        setMatch(row, col, value);
-                        return;
-                    }
-                    count++;
-                }
-            }
-        }
-        
-        throw new IndexOutOfBoundsException("Index out of bounds.");
-        */
     }
     
     // Get the match value by row and column
@@ -311,23 +258,6 @@ public class MatchMatrix {
             int [] rowCol = getRowandColByIndex(index);
             matchList.add(rowCol[ROW]);
             matchList.add(rowCol[COL]);
-            
-            /* 
-            int count = 1;
-            boolean found = false;
-            for (int row = 0; row < SIZE && !found; row++) {
-                for (int col = 0; col < SIZE && !found; col++) {
-                    if (col < row) {
-                        if (count == index) {
-                            matchList.add(row); // Add team A
-                            matchList.add(col); // Add team B
-                            found = true;
-                            break;
-                        }
-                        count++;
-                    }
-                }
-            }*/
         }
         return matchList;
     }
@@ -340,22 +270,6 @@ public class MatchMatrix {
         matchList.add(to_matrix_map[match][ROW]);
         matchList.add(to_matrix_map[match][COL]);
         return matchList;
-        
-        /*int count = 1;
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
-                if (row != col && col < row) {
-                    if (count == index) {
-                        matchList.add(row); // Add team A
-                        matchList.add(col); // Add team B
-                        return matchList;
-                    }
-                    count++;
-                }
-            }
-        }
-        throw new IndexOutOfBoundsException("Index out of bounds.");
-        */
     }                                   
     
     
