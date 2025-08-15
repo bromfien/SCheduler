@@ -4,8 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.io.FileWriter;
-import java.io.IOException;
+//import java.io.FileWriter;
+//import java.io.IOException;
 
 public class Main {
     
@@ -70,7 +70,7 @@ public class Main {
                         for (int k = 0; k < elements_counter; k++){
                             
                             int [] current_row_col_array = matches.getRowandColByIndex(elements_array[k]);
-                            // REWRITE the method to check the row and column properly
+                            
                             if (random_row_col_array[ROW] == current_row_col_array[ROW] || 
                                 random_row_col_array[COL] == current_row_col_array[COL] ||
                                 random_row_col_array[ROW] == current_row_col_array[COL] ||
@@ -82,6 +82,7 @@ public class Main {
                         }
                     
                         if (temp_matches.getMatchValueByIndex(random_match_index) == 0 && !already_exists) {
+                            
                             temp_matches.setMatchValueByIndex(random_match_index, match_count++);
                             elements_array[elements_counter++] = random_match_index;
                             already_exists = true;
@@ -103,6 +104,7 @@ public class Main {
                         boolean already_exists = false;
                         
                         for (int j = 0; j < allElements.get(court_counter).size() / 2; j++) {
+                            
                             int tempMatchValue = temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue());
                             if (tempMatchValue != 0) {
                                 already_exists = true;
@@ -115,13 +117,14 @@ public class Main {
                             for (int j = 0; j < allElements.get(court_counter).size() / 2; j++) {
                                 temp_matches.setMatchValueByRowCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1), match_count++);
                                 elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1));
-                            
                             }
+                            
                             matches_found = true;
+                            
                             if (elements_counter < MatchMatrix.SIZE){
                                 elements_total += allElements.get(court_counter).size() / 2;
                             }
-                            //temp_matches.printMatrix();
+                            
                             break;
                         }
                         
@@ -133,16 +136,17 @@ public class Main {
                         elements_total = 0;
                         elements_counter = 0;
                         court_counter = -1;
+                        
                         for (int k = 0; k < MatchMatrix.SIZE; k++){
                             elements_array [k] = 0; 
                         }
+                        
                         temp_matches = matches.copy();
                         
                         // Maybe delete the following
-                        if (match_pairings_attempts_counter++ % 1E4 == 0) {
+                        if (match_pairings_attempts_counter++ % 1E6 == 0) {
                             break outerloop;
                         }
-                        
                     }
                 } // for loop to iterate through all courts
                 
@@ -151,10 +155,9 @@ public class Main {
                 if (weeks_counter > maxWeeksFound || weeks_counter + 1 == 6) {
                     maxWeeksFound = weeks_counter;
                     //matches.printMatches();
-
-                    /*
+                                     
                     // Write matches.printMatches() output to a file
-                    try (FileWriter writer = new FileWriter("matches_output.txt", true)) { // true enables append mode
+                    /*try (FileWriter writer = new FileWriter("matches_output.txt", true)) { // true enables append mode
                         java.io.PrintStream originalOut = System.out;
                         java.io.PrintStream fileOut = new java.io.PrintStream(new java.io.OutputStream() {
                             @Override
@@ -168,8 +171,8 @@ public class Main {
                         System.setOut(originalOut);
                     } catch (IOException e) {
                         e.printStackTrace();
-                    }
-                    */
+                    }*/
+                    
                     System.out.print("Total Weeks:" + (weeks_counter + 1) + "\t");
                     System.out.println("Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")));
                 }
@@ -185,7 +188,5 @@ public class Main {
         matches.printMatrix();
         matches.printMatches();
     }
-
-
-    
+  
 }
