@@ -1,0 +1,18 @@
+{
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-22",
+      "path": "/usr/lib/jvm/jdk-22.0.2-oracle-x64/",        // <-- replace with the JDK root from step 1
+      "default": true
+    }
+  ],
+  
+  "[plaintext]": {
+  "editor.suggest.showSnippets": false,
+  "editor.suggest.showWords": false,
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.acceptSuggestionOnEnter": "off"
+  },
+  // optional: explicit java.home (choose one)
+  // "java.home": "/path/to/your/jdk"
+}
