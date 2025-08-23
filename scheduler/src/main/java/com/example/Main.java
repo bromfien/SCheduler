@@ -12,51 +12,56 @@ public class Main {
     
     private static final int ROW = MatchMatrix.ROW;
     private static final int COL = MatchMatrix.COL;
-    private static final int SIZE = MatchMatrix.SIZE;
+    private static final int MATCHES_PER_WEEK = MatchMatrix.MATCHES_PER_WEEK;
+    private static final boolean[][] overlap = new boolean[MATCHES_PER_WEEK*MATCHES_PER_WEEK][MATCHES_PER_WEEK*MATCHES_PER_WEEK]; // because 16*16 = 256 possible pairs
+    
+    /*final static List<List<Integer>> allCourtElements = List.of(
+        List.of(0, 1, 2, 3, 4, 5, 6, 7),
+        List.of(0, 1, 2, 3),
+        List.of(0, 1, 2, 3)
+    );*/
+    
+    /*final static List<List<Integer>> allCourtElements = List.of(
+        List.of(0, 1, 2, 3, 4, 5),
+        List.of(0, 1, 2, 3),
+        List.of(0, 1, 2, 3)
+    );*/
+    
+    final static List<List<Integer>> allCourtElements = List.of(
+        List.of(0, 1, 2, 3),
+        List.of(0, 1, 2, 3),
+        List.of(0, 1, 2, 3),
+        List.of(0, 1, 2, 3)
+    );
+    
+    static {
+        preComputeTable();
+    }
     
     public static void main(String[] args) {
-        
-        /*
-        List<List<Integer>> allElements = List.of(
-            List.of(0, 1, 2, 3, 4, 5, 6, 7),
-            List.of(0, 1, 2, 3),
-            List.of(0, 1, 2, 3)
-        );
-        */
-        
-        List<List<Integer>> allCourtElements = List.of(
-            List.of(0, 1, 2, 3),
-            List.of(0, 1, 2, 3),
-            List.of(0, 1, 2, 3),
-            List.of(0, 1, 2, 3)
-        );
-        
+
         PairingGenerator [] courts = new PairingGenerator[allCourtElements.size()];
         
         for (int i = 0; i < courts.length; i++) {
             courts[i] = new PairingGenerator(allCourtElements.get(i));
         }
         
-        
         /*courts[0].printPairings();
         courts[1].printPairings();
         courts[2].printPairings();*/
-        
-        
+            
         MatchMatrix matches = new MatchMatrix();
         MatchMatrix temp_matches;
         
-        int maxWeeksFound = 0;
+        //int maxWeeksFound = 0;
         int break_counter_1 = 0;
         int break_counter_2 = 0;
         
         boolean keepGoing = true;
         
         long startTime = 0;
-        
         long loop1Time = 0;
         long loop2Time = 0;
-        
         
         while (keepGoing) {
             
@@ -66,13 +71,12 @@ public class Main {
             outerloop:
             for (int weeks_counter = 0, match_count = 1; weeks_counter < 7; weeks_counter++) {
 
-                int[] elements_array = new int[SIZE];
-                int elements_counter = 0;
-                int elements_total = 0;
+                int[] elements_array = new int[MATCHES_PER_WEEK]; // contains the index of the matches in a week
+                int elements_counter = 0; // counter for the elements in the elements_array`
+                int elements_total = 0; // total number of elements in the current week at the start of the loop
                 
                 temp_matches = matches.copy();
                 
-                // The outer loop will only run 3 times
                 for (int court_counter = 0; court_counter < allCourtElements.size(); court_counter++){
 
                     elements_total += allCourtElements.get(court_counter).size() / 2;
@@ -83,36 +87,34 @@ public class Main {
                         
                         startTime = System.nanoTime();
                         
-                        if (match_attempts_counter++ % 5E2 == 0) {
+                        if (match_attempts_counter++ % 5E4 == 0) {
+                            
                             break_counter_1++;
+                            loop1Time += (System.nanoTime() - startTime);
                             break outerloop;
                         }
                         
-                        boolean already_exists = false;
-                        // temp_matches.randomizeList();
                         int random_match_index = temp_matches.generateRandomMatch();
                         int [] random_row_col_array = matches.getRowandColByIndex(random_match_index);
                         
-                        for (int k = 0; k < elements_counter; k++){
+                        boolean already_exists = false;
+                        
+                        for (int k = 0; k < elements_counter; k++) {
                             
                             int [] current_row_col_array = matches.getRowandColByIndex(elements_array[k]);
                             
-                            if (random_row_col_array[ROW] == current_row_col_array[ROW] || 
-                                random_row_col_array[COL] == current_row_col_array[COL] ||
-                                random_row_col_array[ROW] == current_row_col_array[COL] ||
-                                random_row_col_array[COL] == current_row_col_array[ROW]) {
+                            if (hasOverlap(random_row_col_array[ROW], random_row_col_array[COL], current_row_col_array[ROW], current_row_col_array[COL])) {
                                 
                                 already_exists = true;
                                 break;
                             }
                         }
-                    
-                        if (temp_matches.getMatchValueByIndex(random_match_index) == 0 && !already_exists) {
                             
-                            temp_matches.setMatchValueByIndex(random_match_index, match_count++);
+                        if (temp_matches.getMatchValueByRowAndCol(random_row_col_array[ROW], random_row_col_array[COL]) == 0 && !already_exists) {                
+                                                                                                                                                  
+                            temp_matches.setMatchValueByRowCol(random_row_col_array[ROW], random_row_col_array[COL], match_count++);
                             elements_array[elements_counter++] = random_match_index;
-                            already_exists = true;
-                        }               
+                        }             
                     } // while loop
                     
                     loop1Time += (System.nanoTime() - startTime);
@@ -131,12 +133,13 @@ public class Main {
                         
                         List<Integer> currentElementList = temp_matches.getRowColListByIndexes(current_elements);               
                         List<Integer> rearrangedList = PairingGenerator.rearrangeList(currentElementList,courts[court_counter].getPairingAsList(k));                        
+                        
                         boolean already_exists = false;
                         
                         for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
                             
-                            int tempMatchValue = temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue());
-                            if (tempMatchValue != 0) {
+                            if (temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue()) != 0) {
+                                
                                 already_exists = true;
                                 break;
                             }
@@ -145,38 +148,38 @@ public class Main {
                         if (!already_exists) {
                             
                             for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
+                                
                                 temp_matches.setMatchValueByRowCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1), match_count++);
                                 elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1));
                             }
                             
                             matches_found = true;
                             
-                            if (elements_counter < SIZE){
+                            if (court_counter < allCourtElements.size() - 1) {
                                 elements_total += allCourtElements.get(court_counter).size() / 2;
                             }
                             
                             break;
                         }
                         
-                    } // for loop to find a pairing
+                    } // for k loop to find a pairing
 
                     if (!matches_found) {
                         
-                        match_count = match_count - (match_count % SIZE) + 1;
+                        match_count = (match_count / MATCHES_PER_WEEK) * MATCHES_PER_WEEK + 1;
                         elements_total = 0;
                         elements_counter = 0;
                         court_counter = -1;
-                        
-                        for (int k = 0; k < SIZE; k++){
-                            elements_array [k] = 0; 
-                        }
-                        
+
                         temp_matches = matches.copy();
                         
                         if (match_pairings_attempts_counter++ % 1E7 == 0) {
+                            
                             break_counter_2++;
+                            loop2Time += (System.nanoTime() - startTime);
                             break outerloop;
                         }
+  
                     }
                     
                     loop2Time += (System.nanoTime() - startTime);
@@ -185,8 +188,10 @@ public class Main {
                 
                 matches = temp_matches.copy();
                 
-                if (weeks_counter > maxWeeksFound || weeks_counter + 1 == 6) {
-                    maxWeeksFound = weeks_counter;
+                if (weeks_counter + 1 == 6) { //}) || weeks_counter > maxWeeksFound) {
+                    
+                    //maxWeeksFound = weeks_counter;
+                    
                     //matches.printMatches();
                                      
                     // Write matches.printMatches() output to a file
@@ -208,8 +213,6 @@ public class Main {
                     
                     System.out.print("Total Weeks:" + (weeks_counter + 1) + "\t");
                     
-
-                    // usage in your print
                     System.out.println(
                         "Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")) +
                         "\tBreak Counter 1: " + break_counter_1 +
@@ -217,19 +220,46 @@ public class Main {
                         "\tLoop 1 Time: " + MatchMatrix.formatDuration(loop1Time) +
                         "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time)
                     );
-
+                    break_counter_1 = 0;
+                    break_counter_2 = 0;
+                    loop1Time = 0;
+                    loop2Time = 0;
                 }
 
                 if (weeks_counter + 1 == 7) {
                     keepGoing = false;
                     break;
                 }
-            } // for loop to iterate through all weeks
+            } // for loop to iterate through all weeks (outerloop)
             
         } // while (keepGoing == true)
            
         matches.printMatrix();
         matches.printMatches();
     }
+    
+    public static boolean hasOverlap(int r1, int c1, int r2, int c2) {
+        int a = (r1 << 4) | c1;
+        int b = (r2 << 4) | c2;
+        return overlap[a][b];
+    }
+                                           
+    public static void preComputeTable ()
+    {
+        // This method is not used in the current implementation.
+        // It can be used for pre-computing or initializing data if needed in the future.
+
+        for (int r1 = 0; r1 < 16; r1++) {
+            for (int c1 = 0; c1 < 16; c1++) {
+                int a = (r1 << 4) | c1;
+                for (int r2 = 0; r2 < 16; r2++) {
+                    for (int c2 = 0; c2 < 16; c2++) {
+                        int b = (r2 << 4) | c2;
+                        overlap[a][b] = (r1 == r2 || c1 == c2 || r1 == c2 || c1 == r2);
+                    }
+                }
+            }
+        }
+    }                                       
 
 }

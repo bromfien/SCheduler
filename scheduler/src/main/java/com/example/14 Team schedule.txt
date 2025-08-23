@@ -1,0 +1,13 @@
+        Main A          Main B          Main C          BP East         BP West         Gerry East      Gerry West
+Week 1  T5 vs T12       T3 vs T7        T1 vs T10       T6 vs T9        T2 vs T4        T8 vs T13       T11 vs T14
+Week 1  T7 vs T12       T5 vs T10       T1 vs T3        T4 vs T9        T2 vs T6        T13 vs T14      T8 vs T11
+Week 2  T1 vs T14       T9 vs T10       T7 vs T13       T4 vs T11       T5 vs T6        T2 vs T12       T3 vs T8
+Week 2  T10 vs T14      T1 vs T13       T7 vs T9        T6 vs T11       T4 vs T5        T8 vs T12       T2 vs T3
+Week 3  T4 vs T6        T11 vs T13      T3 vs T10       T5 vs T8        T2 vs T9        T1 vs T12       T7 vs T14
+Week 3  T6 vs T13       T4 vs T10       T3 vs T11       T8 vs T9        T2 vs T5        T12 vs T14      T1 vs T7
+Week 4  T1 vs T9        T6 vs T14       T5 vs T7        T2 vs T11       T8 vs T10       T4 vs T13       T3 vs T12
+Week 4  T9 vs T14       T6 vs T7        T1 vs T5        T10 vs T11      T2 vs T8        T12 vs T13      T3 vs T4
+Week 5  T2 vs T10       T5 vs T13       T1 vs T11       T4 vs T14       T7 vs T8        T6 vs T12       T3 vs T9
+Week 5  T10 vs T13      T5 vs T11       T1 vs T2        T8 vs T14       T4 vs T7        T9 vs T12       T3 vs T6
+Week 6  T5 vs T9        T2 vs T13       T3 vs T14       T1 vs T4        T6 vs T8        T7 vs T10       T11 vs T12
+Week 6  T9 vs T13       T2 vs T14       T3 vs T5        T4 vs T8        T1 vs T6        T10 vs T12      T7 vs T11

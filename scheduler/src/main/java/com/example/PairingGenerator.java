@@ -111,31 +111,44 @@ public class PairingGenerator {
     // Static method that takes a list of N elements long and rearranges them using the order of a second list of N elements long
     // the returned list will be the same length as the first list, but the elements will be rearranged according to the order of the second list
     public static List<Integer> rearrangeList(List<Integer> original, List<Integer> order) {
-        
-        List<Integer> originalCopy = new ArrayList<>(original);
-        
-        if (originalCopy.size() != order.size()) {
+        int n = original.size();
+        if (n != order.size()) {
             throw new IllegalArgumentException("Original and order lists must be of the same size.");
         }
-        List<Integer> rearranged = new ArrayList<>(Collections.nCopies(original.size(), 0));
-        for (int i = 0; i < originalCopy.size(); i++) {
-            int index = order.get(i);
-            if (index < 0 || index >= originalCopy.size()) {
+
+        // Convert Lists to primitive arrays (fast access, no boxing)
+        int[] origArr = new int[n];
+        int[] orderArr = new int[n];
+        for (int i = 0; i < n; i++) {
+            origArr[i] = original.get(i);
+            orderArr[i] = order.get(i);
+        }
+
+        // Rearranged result
+        int[] rearranged = new int[n];
+        for (int i = 0; i < n; i++) {
+            int index = orderArr[i];
+            if ((index - n) >>> 31 == 0) { // branchless bounds check (index >= 0 && index < n)
+                rearranged[index] = origArr[i];
+            } else {
                 throw new IndexOutOfBoundsException("Index out of bounds: " + index);
             }
-            rearranged.set(index, originalCopy.get(i));
         }
-        // even elements should always be greater than odd elements, e.g. (0, 1), (2, 3), (4, 5)
-        for (int i = 0; i < rearranged.size(); i += 2) {
-            if (i + 1 < rearranged.size() && rearranged.get(i) < rearranged.get(i + 1)) {
-                // Swap if the even element is greater than the odd element
-                int temp = rearranged.get(i);
-                rearranged.set(i, rearranged.get(i + 1));
-                rearranged.set(i + 1, temp);
+
+        // Ensure even index >= odd index, swap in place
+        for (int i = 0; i + 1 < n; i += 2) {
+            if (rearranged[i] < rearranged[i + 1]) {
+                int tmp = rearranged[i];
+                rearranged[i] = rearranged[i + 1];
+                rearranged[i + 1] = tmp;
             }
         }
-        return rearranged;
-    }
+
+        // Wrap result back into List<Integer> (zero-copy wrapper)
+        return Arrays.stream(rearranged).boxed().toList();
+    }   
+
+
     
     // Sort all pairings lexicographically and remove duplicates
     // This method sorts the entire list of pairings and removes duplicates

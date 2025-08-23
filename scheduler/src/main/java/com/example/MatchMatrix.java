@@ -12,8 +12,8 @@ public class MatchMatrix {
     //private ArrayList<Integer> remainArrayList;
     private final int[][] to_matrix_map;
     private final int[][] to_list_map;
-    public static final int SIZE = 16;
-    public static final int TOTAL_MATCHES = SIZE * (SIZE - 1) / 2; // 120 for 16 teams
+    public static final int MATCHES_PER_WEEK = 16;
+    public static final int TOTAL_MATCHES = MATCHES_PER_WEEK * (MATCHES_PER_WEEK - 1) / 2; // 120 for 16 teams
     public static final int ROW = 0;
     public static final int COL = 1;
     private int totalMatches = 0;
@@ -21,10 +21,10 @@ public class MatchMatrix {
 
     // Constructor to initialize the match matrix
     public MatchMatrix() {
-        matrix = new int[SIZE][SIZE];
+        matrix = new int[MATCHES_PER_WEEK][MATCHES_PER_WEEK];
         list = new int[TOTAL_MATCHES+1];
         to_matrix_map = new int[TOTAL_MATCHES+1][2];
-        to_list_map = new int[SIZE][SIZE];
+        to_list_map = new int[MATCHES_PER_WEEK][MATCHES_PER_WEEK];
         
         /*remainArrayList = new ArrayList<>();
         
@@ -45,8 +45,8 @@ public class MatchMatrix {
         list[0] = -9; // Index 0 is unused
         to_matrix_map[0][ROW] = -9; // Unused
         to_matrix_map[0][COL] = -9; // Unused
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
+        for (int row = 0; row < MATCHES_PER_WEEK; row++) {
+            for (int col = 0; col < MATCHES_PER_WEEK; col++) {
                 if (row == col) {
                     matrix[row][col] = -1; // Same team
                 } else if (col > row) {
@@ -65,8 +65,8 @@ public class MatchMatrix {
     
     public MatchMatrix copy() {
         MatchMatrix copy = new MatchMatrix();
-        for (int row = 0; row < SIZE; row++) {
-            for (int col = 0; col < SIZE; col++) {
+        for (int row = 0; row < MATCHES_PER_WEEK; row++) {
+            for (int col = 0; col < MATCHES_PER_WEEK; col++) {
                 copy.matrix[row][col] = this.matrix[row][col];
                 copy.to_list_map[row][col] = this.to_list_map[row][col];
             }
@@ -96,13 +96,13 @@ public class MatchMatrix {
     public void printMatrix() {
 
         System.out.print("     ");
-        for (int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < MATCHES_PER_WEEK; i++) {
             System.out.printf("C%-4d", i + 0);
         }
         System.out.println();
-        for (int row = 0; row < SIZE; row++) {
+        for (int row = 0; row < MATCHES_PER_WEEK; row++) {
             System.out.printf("R%-3d", row + 0);
-            for (int col = 0; col < SIZE; col++) {
+            for (int col = 0; col < MATCHES_PER_WEEK; col++) {
                 if (matrix[row][col] > 0 || matrix[row][col] == -1) // Highlight values greater than 0 or -1 (same team)
                     System.out.printf("%-5s", matrix[row][col]);
                 else if (matrix[row][col] == -2)
@@ -135,13 +135,15 @@ public class MatchMatrix {
             }
         }
 
-        int gamesPerWeek = 16;
+        int gamesPerWeek = MATCHES_PER_WEEK;
         int weekCount = (matchIndexes.size() + gamesPerWeek - 1) / gamesPerWeek;
         int[][] groups = {
-            //{0,1,2,3,8,9,12,13},    // Group 1: 1,2,3,4,9,10,13,14 (0-based)
-            //{4,5,6,7,10,11,14,15}   // Group 2: 5,6,7,8,11,12,15,16 (0-based)
-            {0,1,4,5,8,9,12,13},
-            {2,3,6,7,10,11,14,15} 
+            //{0,1,2,3,8,9,12,13},  // 4, 2, 2    
+            //{4,5,6,7,10,11,14,15} // 4, 2, 2
+            {0,1,4,5,8,9,12,13},    // 4 x 2
+            {2,3,6,7,10,11,14,15}   // 4 x 2
+            //{0,1,2,6,7,10,11},    // 3, 2, 2
+            //{3,4,5,8,9,12,13}     // 3, 2, 2
         };
 
         for (int week = 0; week < weekCount; week++) {
@@ -193,7 +195,7 @@ public class MatchMatrix {
     public void setMatchValueByRowCol(int row, int col, int value) {
         validateTeamIndex(row);
         validateTeamIndex(col);
-        if (row == col || row < 0 || col < 0 || row >= SIZE || col >= SIZE) {
+        if (row == col || row < 0 || col < 0 || row >= MATCHES_PER_WEEK || col >= MATCHES_PER_WEEK) {
             throw new IllegalArgumentException("Cannot update diagonal or invalid team indices.");
         }
 
@@ -219,7 +221,7 @@ public class MatchMatrix {
     // Create a method to get a row and column by index betweeo 0 and totalMatches - 1 and return an array of two integers
     public int[] getRowandColByIndex(int index) {
         if (index < 0 || index >= TOTAL_MATCHES + 1) {                   
-            throw new IndexOutOfBoundsException("Index must be between 0 and " + ((SIZE * (SIZE + 1) / 2) - 1) + ".");
+            throw new IndexOutOfBoundsException("Index must be between 0 and " + ((MATCHES_PER_WEEK * (MATCHES_PER_WEEK + 1) / 2) - 1) + ".");
         }
         return new int[]{to_matrix_map[index][ROW], to_matrix_map[index][COL]};
     }
@@ -229,7 +231,7 @@ public class MatchMatrix {
     public int getIndexByRowandCol(int rowValue, int colValue) {
         validateTeamIndex(rowValue);
         validateTeamIndex(colValue);
-        if (rowValue == colValue || rowValue < 0 || colValue < 0 || rowValue >= SIZE || colValue >= SIZE) {
+        if (rowValue == colValue || rowValue < 0 || colValue < 0 || rowValue >= MATCHES_PER_WEEK || colValue >= MATCHES_PER_WEEK) {
             throw new IllegalArgumentException("Cannot update diagonal or invalid team indices.");
         }
         return to_list_map[rowValue][colValue];
@@ -321,7 +323,7 @@ public class MatchMatrix {
     // Validate team index to ensure it is between 1 and 16
     // This method will throw an IllegalArgumentException if the index is out of bounds
     private void validateTeamIndex(int team) {
-        if (team < 0 || team >= SIZE) {
+        if (team < 0 || team >= MATCHES_PER_WEEK) {
             throw new IllegalArgumentException("Team index must be between 0 and 15.");
         }
     }
