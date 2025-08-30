@@ -5,8 +5,8 @@ import java.util.List;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-//import java.io.FileWriter;
-//import java.io.IOException;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Main {
     
@@ -14,7 +14,7 @@ public class Main {
     private static final int COL = MatchMatrix.COL;
     private static final int MATCHES_PER_WEEK = MatchMatrix.MATCHES_PER_WEEK;
     private static final boolean[][] overlap = new boolean[MATCHES_PER_WEEK*MATCHES_PER_WEEK][MATCHES_PER_WEEK*MATCHES_PER_WEEK]; // because 16*16 = 256 possible pairs
-    
+    private static final int WEEKS = 7;
     /*final static List<List<Integer>> allCourtElements = List.of(
         List.of(0, 1, 2, 3, 4, 5, 6, 7),
         List.of(0, 1, 2, 3),
@@ -38,17 +38,17 @@ public class Main {
         preComputeTable();
     }
     
+    /**
+     * @param args
+     */
     public static void main(String[] args) {
 
         PairingGenerator [] courts = new PairingGenerator[allCourtElements.size()];
         
         for (int i = 0; i < courts.length; i++) {
             courts[i] = new PairingGenerator(allCourtElements.get(i));
+            //courts[i].printPairings();
         }
-        
-        /*courts[0].printPairings();
-        courts[1].printPairings();
-        courts[2].printPairings();*/
             
         MatchMatrix matches = new MatchMatrix();
         MatchMatrix temp_matches;
@@ -69,7 +69,7 @@ public class Main {
             int match_pairings_attempts_counter = 1;
             
             outerloop:
-            for (int weeks_counter = 0, match_count = 1; weeks_counter < 7; weeks_counter++) {
+            for (int weeks_counter = 0, match_count = 1; weeks_counter < WEEKS; weeks_counter++) {
 
                 int[] elements_array = new int[MATCHES_PER_WEEK]; // contains the index of the matches in a week
                 int elements_counter = 0; // counter for the elements in the elements_array`
@@ -87,7 +87,7 @@ public class Main {
                         
                         startTime = System.nanoTime();
                         
-                        if (match_attempts_counter++ % 5E4 == 0) {
+                        if (match_attempts_counter++ % 1E5 == 0) {
                             
                             break_counter_1++;
                             loop1Time += (System.nanoTime() - startTime);
@@ -131,14 +131,21 @@ public class Main {
                             elements_counter
                         );
                         
-                        List<Integer> currentElementList = temp_matches.getRowColListByIndexes(current_elements);               
-                        List<Integer> rearrangedList = PairingGenerator.rearrangeList(currentElementList,courts[court_counter].getPairingAsList(k));                        
+                        //List<Integer> currentElementList = temp_matches.getRowColListByIndexes(current_elements);               
+                        //List<Integer> rearrangedList = PairingGenerator.rearrangeList(currentElementList,courts[court_counter].getPairingAsList(k));                        
+                        
+                        int[] currentElementArray = temp_matches.getRowColArrayByIndexes(current_elements);
+                        int[] rearrangedArray = PairingGenerator.rearrangeArray(
+                            currentElementArray, courts[court_counter].getPairingAsArray(k));
+                        
+
                         
                         boolean already_exists = false;
                         
                         for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
                             
-                            if (temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue()) != 0) {
+                            //if (temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue()) != 0) {
+                            if (temp_matches.getMatchValueByRowAndCol(rearrangedArray[2*j], rearrangedArray[2*j + 1]) != 0) {
                                 
                                 already_exists = true;
                                 break;
@@ -149,8 +156,10 @@ public class Main {
                             
                             for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
                                 
-                                temp_matches.setMatchValueByRowCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1), match_count++);
-                                elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1));
+                                //temp_matches.setMatchValueByRowCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1), match_count++);
+                                //elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1));
+                                temp_matches.setMatchValueByRowCol (rearrangedArray[2*j],rearrangedArray[2*j+1], match_count++);
+                                elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedArray[2*j],rearrangedArray[2*j+1]);
                             }
                             
                             matches_found = true;
@@ -173,10 +182,24 @@ public class Main {
 
                         temp_matches = matches.copy();
                         
-                        if (match_pairings_attempts_counter++ % 1E7 == 0) {
+                        if (match_pairings_attempts_counter++ % 1E6 == 0) {
                             
                             break_counter_2++;
                             loop2Time += (System.nanoTime() - startTime);
+                            
+                            if (weeks_counter + 1 == WEEKS) {
+                                System.out.print("No solution found\t");
+                    
+                                System.out.println(
+                                    "Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")) +
+                                    "\tBreak Counter 1: " + break_counter_1 +
+                                    "\tBreak Counter 2: " + break_counter_2 +
+                                    "\tLoop 1 Time: " + MatchMatrix.formatDuration(loop1Time) +
+                                    "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time) +
+                                    "\tWeeks: " + (weeks_counter + 1)
+                                );
+                            }
+                            
                             break outerloop;
                         }
   
@@ -188,14 +211,14 @@ public class Main {
                 
                 matches = temp_matches.copy();
                 
-                if (weeks_counter + 1 == 6) { //}) || weeks_counter > maxWeeksFound) {
+                if (weeks_counter + 1 == WEEKS - 1){// || weeks_counter > maxWeeksFound) {
                     
                     //maxWeeksFound = weeks_counter;
                     
                     //matches.printMatches();
                                      
                     // Write matches.printMatches() output to a file
-                    /*try (FileWriter writer = new FileWriter("matches_output.txt", true)) { // true enables append mode
+                    try (FileWriter writer = new FileWriter("matches_output.txt", true)) { // true enables append mode
                         java.io.PrintStream originalOut = System.out;
                         java.io.PrintStream fileOut = new java.io.PrintStream(new java.io.OutputStream() {
                             @Override
@@ -204,21 +227,23 @@ public class Main {
                             }
                         });
                         System.setOut(fileOut);
+                        matches.printMatrix();
                         matches.printMatches();
                         System.out.flush();
                         System.setOut(originalOut);
                     } catch (IOException e) {
                         e.printStackTrace();
-                    }*/
+                    }
                     
-                    System.out.print("Total Weeks:" + (weeks_counter + 1) + "\t");
+                    System.out.print("Total Weeks:" + (weeks_counter + 1) + "\t\t");
                     
                     System.out.println(
                         "Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")) +
                         "\tBreak Counter 1: " + break_counter_1 +
                         "\tBreak Counter 2: " + break_counter_2 +
                         "\tLoop 1 Time: " + MatchMatrix.formatDuration(loop1Time) +
-                        "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time)
+                        "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time) +
+                        "\tWeeks: " + (weeks_counter + 1)
                     );
                     break_counter_1 = 0;
                     break_counter_2 = 0;
@@ -226,7 +251,7 @@ public class Main {
                     loop2Time = 0;
                 }
 
-                if (weeks_counter + 1 == 7) {
+                if (weeks_counter + 1 == WEEKS) {
                     keepGoing = false;
                     break;
                 }
@@ -246,8 +271,6 @@ public class Main {
                                            
     public static void preComputeTable ()
     {
-        // This method is not used in the current implementation.
-        // It can be used for pre-computing or initializing data if needed in the future.
 
         for (int r1 = 0; r1 < 16; r1++) {
             for (int c1 = 0; c1 < 16; c1++) {

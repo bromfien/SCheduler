@@ -1,6 +1,7 @@
 package com.example;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.time.Duration;
 import java.util.ArrayList;
 //import java.util.Collections;
@@ -9,7 +10,6 @@ public class MatchMatrix {
 
     private int[][] matrix;
     private int[] list;
-    //private ArrayList<Integer> remainArrayList;
     private final int[][] to_matrix_map;
     private final int[][] to_list_map;
     public static final int MATCHES_PER_WEEK = 16;
@@ -25,12 +25,6 @@ public class MatchMatrix {
         list = new int[TOTAL_MATCHES+1];
         to_matrix_map = new int[TOTAL_MATCHES+1][2];
         to_list_map = new int[MATCHES_PER_WEEK][MATCHES_PER_WEEK];
-        
-        /*remainArrayList = new ArrayList<>();
-        
-        for (int i = 1; i <= TOTAL_MATCHES; i++) {
-                remainArrayList.add(i);
-        }*/
         
         initializeMatrix();
     }
@@ -77,10 +71,6 @@ public class MatchMatrix {
             copy.to_matrix_map[i][COL] = this.to_matrix_map[i][COL];
         }
         copy.totalMatches = this.totalMatches;
-        /*copy.remainArrayList.clear();
-        for (Integer index : this.remainArrayList) {
-            copy.remainArrayList.add(index);
-        }*/
         copy.matchCount = this.matchCount;
         return copy;
     }
@@ -203,12 +193,10 @@ public class MatchMatrix {
             matrix[row][col] = value;
             int index = to_list_map[row][col];
             list[index] = value;
-            // remainArrayList.remove(Integer.valueOf(index));
         } else {
             matrix[col][row] = value;
             int index = to_list_map[col][row];
             list[index] = value;
-            // remainArrayList.remove(Integer.valueOf(index));
         }
         matchCount++;
         
@@ -285,6 +273,23 @@ public class MatchMatrix {
         }
         return matchList;
     }
+    
+    public int [] getRowColArrayByIndexes(int[] indexes) {
+        //List<Integer> matchList = new ArrayList<>();
+        int [] matchList = new int[indexes.length * 2];
+        int pos = 0;
+        for (int index : indexes) {
+            if (index <= 0 || index > TOTAL_MATCHES + 1) {
+                throw new IndexOutOfBoundsException("Index must be between 0 and " + (TOTAL_MATCHES) + ".");
+            }
+            int [] rowCol = getRowandColByIndex(index);
+            matchList[pos++] = rowCol[ROW];
+            matchList[pos++] = rowCol[COL];
+        }
+        return matchList;
+    }
+    
+    
     public List<Integer> getMatchListByIndex(int index) {
         if (index <= 0 || index > TOTAL_MATCHES + 1) {
             throw new IndexOutOfBoundsException("Index must be between 0 and " + (TOTAL_MATCHES) + ".");
@@ -300,26 +305,13 @@ public class MatchMatrix {
     // that value in the matrix must be set to 0 to be valid
     // if the value is already set, generate a new value until a valid one is found
     public int generateRandomMatch() {
-        
-        // return remainArrayList.getFirst();
-        
         int index;
         do {
-            index = (int) (Math.random() * (TOTAL_MATCHES) + 1);
+            index = ThreadLocalRandom.current().nextInt(1, TOTAL_MATCHES + 1);
         } while (getMatchValueByIndex(index) != 0);
         return index;
-
     }
                                  
-    /* 
-    public void randomizeList() {
-        Collections.shuffle(remainArrayList);
-    }
-
-    public boolean hasRemainingMatches() {
-        return !remainArrayList.isEmpty();
-    }
-    */
     // Validate team index to ensure it is between 1 and 16
     // This method will throw an IllegalArgumentException if the index is out of bounds
     private void validateTeamIndex(int team) {

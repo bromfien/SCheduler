@@ -41,6 +41,19 @@ public class PairingGenerator {
         return result;
     }
     
+    public int[] getPairingAsArray(int index) {
+        List<Pair<Integer, Integer>> pairing = getPairingAtIndex(index);
+        int[] result = new int[pairing.size() * 2];
+        int arrayIndex = 0;
+        
+        for (Pair<Integer, Integer> pair : pairing) {
+            result[arrayIndex++] = pair.getFirst();
+            result[arrayIndex++] = pair.getSecond();
+        }
+    
+        return result;
+    }
+    
     // Count the total number of pairings
 
     public int countPairings() {
@@ -128,11 +141,15 @@ public class PairingGenerator {
         int[] rearranged = new int[n];
         for (int i = 0; i < n; i++) {
             int index = orderArr[i];
-            if ((index - n) >>> 31 == 0) { // branchless bounds check (index >= 0 && index < n)
+            // Check index bounds using bitwise operations
+            // explaination: (index | (n - 1 - index)) >>> 31 == 0 checks if index is in [0, n-1]
+            
+            if (((index | (n - 1 - index)) >>> 31) == 0) {
                 rearranged[index] = origArr[i];
             } else {
                 throw new IndexOutOfBoundsException("Index out of bounds: " + index);
             }
+
         }
 
         // Ensure even index >= odd index, swap in place
@@ -148,6 +165,38 @@ public class PairingGenerator {
         return Arrays.stream(rearranged).boxed().toList();
     }   
 
+
+    public static int[] rearrangeArray(int[] original, int[] order) {
+        int n = original.length;
+        if (n != order.length) {
+            throw new IllegalArgumentException("Original and order arrays must be of the same length.");
+        }
+
+        // Rearranged result
+        int[] rearranged = new int[n];
+        for (int i = 0; i < n; i++) {
+            int index = order[i];
+            // Check index bounds using bitwise operations
+            // explaination: (index | (n - 1 - index)) >>> 31 == 0 checks if index is in [0, n-1]
+            
+            if (((index | (n - 1 - index)) >>> 31) == 0) {
+                rearranged[index] = original[i];
+            } else {
+                throw new IndexOutOfBoundsException("Index out of bounds: " + index);
+            }
+        }
+
+        // Ensure even index >= odd index, swap in place
+        for (int i = 0; i + 1 < n; i += 2) {
+            if (rearranged[i] < rearranged[i + 1]) {
+                int tmp = rearranged[i];
+                rearranged[i] = rearranged[i + 1];
+                rearranged[i + 1] = tmp;
+            }
+        }
+
+        return rearranged;
+    }
 
     
     // Sort all pairings lexicographically and remove duplicates
