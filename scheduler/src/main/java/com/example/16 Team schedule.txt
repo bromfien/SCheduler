@@ -16,7 +16,7 @@ R13 68   28   45   64   111  95   .....70   109  13   47   15   94   -1    |    
 R14 20   82   75   73   1    .....23   5    85   107  105  37   33   62   -1    |   
 R15 42   98   .....61   90   11   9    43   69   66   91   27   101  26   63   -1   
 
-                Main A          Main B          Main C          Main D          BP East         BP West         Gerry East      Gerry West
+            Main A          Main B          Main C          Main D          BP East         BP West         Gerry East      Gerry West
 Week 1      T5 vs T15       T3 vs T8        T2 vs T9        T11 vs T13      T7 vs T16       T4 vs T6        T10 vs T14      T1 vs T12
 Week 1      T8 vs T15       T3 vs T5        T9 vs T13       T2 vs T11       T6 vs T16       T4 vs T7        T12 vs T14      T1 vs T10
 Week 2      T3 vs T11       T8 vs T10       T7 vs T13       T1 vs T15       T2 vs T12       T14 vs T16      T4 vs T9        T5 vs T6

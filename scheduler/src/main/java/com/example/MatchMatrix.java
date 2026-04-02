@@ -128,10 +128,10 @@ public class MatchMatrix {
         int gamesPerWeek = MATCHES_PER_WEEK;
         int weekCount = (matchIndexes.size() + gamesPerWeek - 1) / gamesPerWeek;
         int[][] groups = {
-            //{0,1,2,3,8,9,12,13},  // 4, 2, 2    
-            //{4,5,6,7,10,11,14,15} // 4, 2, 2
-            {0,1,4,5,8,9,12,13},    // 4 x 2
-            {2,3,6,7,10,11,14,15}   // 4 x 2
+            {0,1,2,3,8,9,12,13},  // 4, 2, 2    
+            {4,5,6,7,10,11,14,15} // 4, 2, 2
+            //{0,1,4,5,8,9,12,13},    // 4 x 2
+            //{2,3,6,7,10,11,14,15}   // 4 x 2
             //{0,1,2,6,7,10,11},    // 3, 2, 2
             //{3,4,5,8,9,12,13}     // 3, 2, 2
         };
@@ -146,12 +146,12 @@ public class MatchMatrix {
                     if (idx < matchIndexes.size()) {
                         int matchNum = matchIndexes.get(idx);
                         int[] teams = getRowandColByIndex(matchNum);
-                        if (teams[0] < teams[1]) 
-                            System.out.printf("T%d vs T%d", teams[0] + 1, teams[1] + 1);
+                        if (teams[0] < teams[1])
+                            System.out.printf("T%2d vs T%2d", teams[0] + 1, teams[1] + 1);
                         else
-                            System.out.printf("T%d vs T%d", teams[1] + 1, teams[0] + 1);
+                            System.out.printf("T%2d vs T%2d", teams[1] + 1, teams[0] + 1);
                     } else {
-                        System.out.print("-");
+                        System.out.print("  -   "); // pad to match "T X vs TY" width
                     }
                 }
                 System.out.println();
@@ -261,7 +261,7 @@ public class MatchMatrix {
     // function provides a List of matches by an array of indexes and return a list of teams (1-16).
     // Each match has two teams, so the list will have 2 * totalMatches elements.
     
-    public List<Integer> getRowColListByIndexes(int[] indexes) {
+    /*public List<Integer> getRowColListByIndexes(int[] indexes) {
         List<Integer> matchList = new ArrayList<>();
         for (int index : indexes) {
             if (index <= 0 || index > TOTAL_MATCHES + 1) {
@@ -272,7 +272,7 @@ public class MatchMatrix {
             matchList.add(rowCol[COL]);
         }
         return matchList;
-    }
+    }*/
     
     public int [] getRowColArrayByIndexes(int[] indexes) {
         //List<Integer> matchList = new ArrayList<>();
@@ -322,10 +322,11 @@ public class MatchMatrix {
     
     public static String formatDuration(long nanos) {
         Duration d = Duration.ofNanos(nanos);
-        long hours   = d.toHours();
+        //long hours   = d.toHours();
         long minutes = d.toMinutesPart();
         long seconds = d.toSecondsPart();
         long millis  = d.toMillisPart();
-        return String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, millis);
+        //return String.format("%02d:%02d:%02d.%03d", hours, minutes, seconds, millis);
+        return String.format("%02d:%02d.%03d", minutes, seconds, millis);
     }
 }

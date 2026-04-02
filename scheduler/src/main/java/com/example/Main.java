@@ -15,11 +15,11 @@ public class Main {
     private static final int MATCHES_PER_WEEK = MatchMatrix.MATCHES_PER_WEEK;
     private static final boolean[][] overlap = new boolean[MATCHES_PER_WEEK*MATCHES_PER_WEEK][MATCHES_PER_WEEK*MATCHES_PER_WEEK]; // because 16*16 = 256 possible pairs
     private static final int WEEKS = 7;
-    /*final static List<List<Integer>> allCourtElements = List.of(
+    final static List<List<Integer>> allCourtElements = List.of(
         List.of(0, 1, 2, 3, 4, 5, 6, 7),
         List.of(0, 1, 2, 3),
         List.of(0, 1, 2, 3)
-    );*/
+    );
     
     /*final static List<List<Integer>> allCourtElements = List.of(
         List.of(0, 1, 2, 3, 4, 5),
@@ -27,12 +27,12 @@ public class Main {
         List.of(0, 1, 2, 3)
     );*/
     
-    final static List<List<Integer>> allCourtElements = List.of(
+    /*final static List<List<Integer>> allCourtElements = List.of(
         List.of(0, 1, 2, 3),
         List.of(0, 1, 2, 3),
         List.of(0, 1, 2, 3),
         List.of(0, 1, 2, 3)
-    );
+    );*/
     
     static {
         preComputeTable();
@@ -84,7 +84,7 @@ public class Main {
                     int match_attempts_counter = 1;
 
                     while (elements_counter < elements_total) {
-                        
+
                         startTime = System.nanoTime();
                         
                         if (match_attempts_counter++ % 1E5 == 0) {
@@ -131,9 +131,6 @@ public class Main {
                             elements_counter
                         );
                         
-                        //List<Integer> currentElementList = temp_matches.getRowColListByIndexes(current_elements);               
-                        //List<Integer> rearrangedList = PairingGenerator.rearrangeList(currentElementList,courts[court_counter].getPairingAsList(k));                        
-                        
                         int[] currentElementArray = temp_matches.getRowColArrayByIndexes(current_elements);
                         int[] rearrangedArray = PairingGenerator.rearrangeArray(
                             currentElementArray, courts[court_counter].getPairingAsArray(k));
@@ -143,8 +140,7 @@ public class Main {
                         boolean already_exists = false;
                         
                         for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
-                            
-                            //if (temp_matches.getMatchValueByRowAndCol((int)rearrangedList.get(2*j).intValue(), (int)rearrangedList.get(2*j+1).intValue()) != 0) {
+
                             if (temp_matches.getMatchValueByRowAndCol(rearrangedArray[2*j], rearrangedArray[2*j + 1]) != 0) {
                                 
                                 already_exists = true;
@@ -156,8 +152,6 @@ public class Main {
                             
                             for (int j = 0; j < allCourtElements.get(court_counter).size() / 2; j++) {
                                 
-                                //temp_matches.setMatchValueByRowCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1), match_count++);
-                                //elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedList.get(2*j),rearrangedList.get(2*j+1));
                                 temp_matches.setMatchValueByRowCol (rearrangedArray[2*j],rearrangedArray[2*j+1], match_count++);
                                 elements_array[elements_counter++] = temp_matches.getIndexByRowandCol (rearrangedArray[2*j],rearrangedArray[2*j+1]);
                             }
@@ -182,7 +176,8 @@ public class Main {
 
                         temp_matches = matches.copy();
                         
-                        if (match_pairings_attempts_counter++ % 1E6 == 0) {
+                        if (match_pairings_attempts_counter++ % 1E7 == 0 && weeks_counter + 1 == WEEKS ||
+                            match_pairings_attempts_counter % 1E6 == 0 && weeks_counter + 1 < WEEKS) {
                             
                             break_counter_2++;
                             loop2Time += (System.nanoTime() - startTime);
@@ -190,13 +185,14 @@ public class Main {
                             if (weeks_counter + 1 == WEEKS) {
                                 System.out.print("No solution found\t");
                     
-                                System.out.println(
-                                    "Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")) +
-                                    "\tBreak Counter 1: " + break_counter_1 +
-                                    "\tBreak Counter 2: " + break_counter_2 +
-                                    "\tLoop 1 Time: " + MatchMatrix.formatDuration(loop1Time) +
-                                    "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time) +
-                                    "\tWeeks: " + (weeks_counter + 1)
+                                System.out.printf(
+                                    "Time: %s  Counter 1: %5d  Counter 2: %5d  Loop 1 Time: %s  Loop 2 Time: %s  Weeks: %3d%n",
+                                    LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")),
+                                    break_counter_1,
+                                    break_counter_2,
+                                    MatchMatrix.formatDuration(loop1Time),
+                                    MatchMatrix.formatDuration(loop2Time),
+                                    weeks_counter + 1
                                 );
                             }
                             
@@ -235,15 +231,16 @@ public class Main {
                         e.printStackTrace();
                     }
                     
-                    System.out.print("Total Weeks:" + (weeks_counter + 1) + "\t\t");
+                    System.out.print("Total Weeks: "+ (weeks_counter + 1) + "\t\t");
                     
-                    System.out.println(
-                        "Current system time: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")) +
-                        "\tBreak Counter 1: " + break_counter_1 +
-                        "\tBreak Counter 2: " + break_counter_2 +
-                        "\tLoop 1 Time: " + MatchMatrix.formatDuration(loop1Time) +
-                        "\tLoop 2 Time: " + MatchMatrix.formatDuration(loop2Time) +
-                        "\tWeeks: " + (weeks_counter + 1)
+                    System.out.printf(
+                        "Time: %s  Counter 1: %5d  Counter 2: %5d  Loop 1 Time: %s  Loop 2 Time: %s  Weeks: %3d%n",
+                        LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")),
+                        break_counter_1,
+                        break_counter_2,
+                        MatchMatrix.formatDuration(loop1Time),
+                        MatchMatrix.formatDuration(loop2Time),
+                        weeks_counter + 1
                     );
                     break_counter_1 = 0;
                     break_counter_2 = 0;
