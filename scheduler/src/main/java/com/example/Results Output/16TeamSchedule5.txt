@@ -1,0 +1,50 @@
+     C0   C1   C2   C3   C4   C5   C6   C7   C8   C9   C10  C11  C12  C13  C14  C15  
+R0  -1    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |   
+R1  32   -1    |    |    |    |    |    |    |    |    |    |    |    |    |    |   
+R2  34   60   -1    |    |    |    |    |    |    |    |    |    |    |    |    |   
+R3  80   8    99   -1    |    |    |    |    |    |    |    |    |    |    |    |   
+R4  56   94   1    77   -1    |    |    |    |    |    |    |    |    |    |    |   
+R5  16   76   24   .....108  -1    |    |    |    |    |    |    |    |    |    |   
+R6  112  4    88   28   40   73   -1    |    |    |    |    |    |    |    |    |   
+R7  92   30   104  41   .....13   49   -1    |    |    |    |    |    |    |    |   
+R8  .....38   6    61   35   82   110  72   -1    |    |    |    |    |    |    |   
+R9  52   96   19   44   105  55   .....68   22   -1    |    |    |    |    |    |   
+R10 78   57   81   103  79   45   25   100  85   9    -1    |    |    |    |    |   
+R11 29   102  58   3    95   48   7    31   66   93   59   -1    |    |    |    |   
+R12 90   97   71   26   5    51   54   43   2    42   27   .....-1    |    |    |   
+R13 109  74   .....64   23   20   75   89   111  12   47   46   91   -1    |    |   
+R14 14   33   37   87   18   106  84   15   63   107  .....69   65   62   -1    |   
+R15 39   .....67   83   50   86   36   53   17   70   11   98   101  10   21   -1   
+		Main A 		Main B 		Main C 		Main D		BP East		BP West		Gerry East	Gerry West
+Week 1	T 3 vs T 5	T 9 vs T13	T 4 vs T12	T 2 vs T 7	T10 vs T11	T14 vs T16	T 6 vs T 8	T 1 vs T15
+Week 1	T 5 vs T13	T 3 vs T 9	T 7 vs T12	T 2 vs T 4	T11 vs T16	T10 vs T14	T 8 vs T15	T 1 vs T 6
+Week 2	T 9 vs T16	T 5 vs T15	T 3 vs T10	T 6 vs T14	T 7 vs T11	T 4 vs T13	T 1 vs T12	T 2 vs T 8
+Week 2	T15 vs T16	T 9 vs T10	T 5 vs T14	T 3 vs T 6	T11 vs T13	T 4 vs T 7	T 8 vs T12	T 1 vs T 2
+Week 3	T 2 vs T15	T 1 vs T 3	T 5 vs T 9	T 7 vs T16	T 4 vs T 8	T10 vs T13	T 6 vs T11	T12 vs T14
+Week 3	T 3 vs T15	T 2 vs T 9	T 1 vs T16	T 5 vs T 7	T 8 vs T13	T 4 vs T10	T11 vs T14	T 6 vs T12
+Week 4	T 7 vs T 8	T 5 vs T16	T 6 vs T13	T 1 vs T10	T 2 vs T11	T 3 vs T12	T 4 vs T 9	T14 vs T15
+Week 4	T 8 vs T16	T 7 vs T13	T 6 vs T10	T 1 vs T 5	T11 vs T12	T 2 vs T 3	T 9 vs T15	T 4 vs T14
+Week 5	T13 vs T15	T 9 vs T12	T 3 vs T16	T 8 vs T10	T 6 vs T 7	T 2 vs T14	T 4 vs T 5	T 1 vs T11
+Week 5	T12 vs T15	T10 vs T16	T 3 vs T13	T 8 vs T 9	T 7 vs T14	T 2 vs T 6	T 5 vs T11	T 1 vs T 4
+Week 6	T 3 vs T11	T 6 vs T 9	T 4 vs T16	T 7 vs T15	T 8 vs T14	T 1 vs T13	T10 vs T12	T 2 vs T 5
+Week 6	T 9 vs T11	T 6 vs T16	T 4 vs T15	T 3 vs T 7	T13 vs T14	T 1 vs T 8	T 5 vs T12	T 2 vs T10
+Week 7	T 2 vs T13	T12 vs T16	T 3 vs T 4	T 8 vs T11	T 5 vs T10	T 6 vs T15	T 1 vs T14	T 7 vs T 9
+Week 7	T13 vs T16	T 2 vs T12	T 4 vs T11	T 3 vs T 8	T10 vs T15	T 5 vs T 6	T 9 vs T14	T 1 vs T 7
+
+     Main  BP  Gerry 
+T1        4   2     8
+T2        6   4     4
+T3       12   2     0
+T4        6   4     4
+T5        8   2     4
+T6        6   4     4
+T7        8   4     2
+T8        6   4     4
+T9       10   0     4
+T10       6   6     2
+T11       4   6     4
+T12       6   2     6
+T13       8   6     0
+T14       2   6     6
+T15       8   2     4
+T16      12   2     0
