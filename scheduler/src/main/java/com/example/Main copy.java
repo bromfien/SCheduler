@@ -1,7 +1,6 @@
 package com.example;
 
 import java.util.Arrays;
-import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -16,12 +15,6 @@ public class Main {
     private static final int MATCHES_PER_WEEK = MatchMatrix.MATCHES_PER_WEEK;
     private static final boolean[][] overlap = new boolean[MATCHES_PER_WEEK*MATCHES_PER_WEEK][MATCHES_PER_WEEK*MATCHES_PER_WEEK]; // because 16*16 = 256 possible pairs
     private static final int WEEKS = 7;
-
-    // Court group boundaries (mirror of CourtCounter constants)
-    static final int MAIN_START  = 0, MAIN_END  = 3;
-    static final int BP_START    = 4, BP_END    = 5;
-    static final int GERRY_START = 6, GERRY_END = 7;
-
     final static List<List<Integer>> allCourtElements = List.of(
         List.of(0, 1, 2, 3, 4, 5, 6, 7),
         List.of(0, 1, 2, 3),
@@ -263,106 +256,8 @@ public class Main {
             
         } // while (keepGoing == true)
            
-        // Write final results to a timestamped file instead of the console
-        String timestamp = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-        String filename  = "matches_" + timestamp + ".txt";
-
-        try (java.io.PrintStream fileOut = new java.io.PrintStream(new java.io.FileOutputStream(filename))) {
-            java.io.PrintStream originalOut = System.out;
-            System.setOut(fileOut);
-
-            matches.printMatrix();
-            matches.printMatches();
-            printCourtCounts(matches);
-
-            System.out.flush();
-            System.setOut(originalOut);
-        } catch (java.io.FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Results saved to: " + filename);
-    }
-
-    /**
-     * Tallies how many times each team appears on each court group (Main, BP, Gerry)
-     * across the full schedule, working directly from the in-memory MatchMatrix.
-     *
-     * The court slot boundaries within each group row mirror CourtCounter:
-     *   slots 0-3  -> Main   (MAIN_START  .. MAIN_END)
-     *   slots 4-5  -> BP     (BP_START    .. BP_END)
-     *   slots 6-7  -> Gerry  (GERRY_START .. GERRY_END)
-     *
-     * NOTE: The groups array below must be kept in sync with the one in
-     *       MatchMatrix.printMatches() so that court assignments match the
-     *       printed schedule exactly.
-     */
-    public static void printCourtCounts(MatchMatrix matches) {
-
-        // Keep in sync with MatchMatrix.printMatches()
-        int[][] groups = {
-            {0, 1, 2, 3, 8, 9, 12, 13},   // Group A
-            {4, 5, 6, 7, 10, 11, 14, 15}  // Group B
-            //{0,1,4,5,8,9,12,13},
-            //{2,3,6,7,10,11,14,15}
-            //{0,1,2,6,7,10,11},
-            //{3,4,5,8,9,12,13}
-        };
-
-        // Rebuild the ordered match-index list exactly as printMatches() does.
-        int totalListSize = MatchMatrix.TOTAL_MATCHES + 1;
-        List<Integer> matchIndexes = new ArrayList<>();
-        for (int k = 1; k < totalListSize; k++) {
-            for (int i = 1; i < totalListSize; i++) {
-                if (matches.getMatchValueByIndex(i) == k) {
-                    matchIndexes.add(i);
-                }
-            }
-        }
-
-        // 1-based tally arrays (index 0 unused)
-        int[] main  = new int[MATCHES_PER_WEEK + 1];
-        int[] bp    = new int[MATCHES_PER_WEEK + 1];
-        int[] gerry = new int[MATCHES_PER_WEEK + 1];
-
-        int gamesPerWeek = MATCHES_PER_WEEK;
-        int weekCount = (matchIndexes.size() + gamesPerWeek - 1) / gamesPerWeek;
-
-        for (int week = 0; week < weekCount; week++) {
-            int base = week * gamesPerWeek;
-
-            for (int[] group : groups) {
-                // j is the slot position within the group (0-7).
-                // That position directly determines the court type, matching
-                // CourtCounter's courtIndex logic which is also 0-based per group row.
-                for (int j = 0; j < group.length; j++) {
-                    int idx = base + group[j];
-                    if (idx >= matchIndexes.size()) continue;
-
-                    int matchNum = matchIndexes.get(idx);
-                    int[] teams  = matches.getRowandColByIndex(matchNum);
-                    int t1 = teams[ROW] + 1; // convert 0-based to 1-based
-                    int t2 = teams[COL] + 1;
-
-                    if (j >= MAIN_START && j <= MAIN_END) {
-                        main[t1]++;
-                        main[t2]++;
-                    } else if (j >= BP_START && j <= BP_END) {
-                        bp[t1]++;
-                        bp[t2]++;
-                    } else if (j >= GERRY_START && j <= GERRY_END) {
-                        gerry[t1]++;
-                        gerry[t2]++;
-                    }
-                }
-            }
-        }
-
-        System.out.println();
-        System.out.printf("     %-6s%-4s%-6s%n", "Main", "BP", "Gerry");
-        for (int t = 1; t <= MATCHES_PER_WEEK; t++) {
-            System.out.printf("T%-2d  %6d%4d%6d%n", t, main[t], bp[t], gerry[t]);
-        }
+        matches.printMatrix();
+        matches.printMatches();
     }
     
     public static boolean hasOverlap(int r1, int c1, int r2, int c2) {
@@ -371,7 +266,9 @@ public class Main {
         return overlap[a][b];
     }
                                            
-    public static void preComputeTable() {
+    public static void preComputeTable ()
+    {
+
         for (int r1 = 0; r1 < 16; r1++) {
             for (int c1 = 0; c1 < 16; c1++) {
                 int a = (r1 << 4) | c1;
