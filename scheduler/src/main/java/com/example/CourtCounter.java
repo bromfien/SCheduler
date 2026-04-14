@@ -5,9 +5,9 @@ import java.io.*;
 
 public class CourtCounter {
 
-    static final int MAIN_START  = 0, MAIN_END  = 3;
-    static final int BP_START    = 4, BP_END    = 5;
-    static final int GERRY_START = 6, GERRY_END = 7;
+    static final int MAIN_START  = 4, MAIN_END  = 6;
+    static final int BP_START    = 2, BP_END    = 3;
+    static final int GERRY_START = 0, GERRY_END = 1;
 
     public static void main(String[] args) throws IOException {
         if (args.length < 1) {

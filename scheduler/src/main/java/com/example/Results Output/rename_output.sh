@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for file in 16*.txt; do
+for file in 14*.txt; do
   # Skip if no matching files
   [ -e "$file" ] || continue
 
