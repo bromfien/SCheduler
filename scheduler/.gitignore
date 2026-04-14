@@ -9,4 +9,9 @@
 *.log
 target/
 out/
-
+# Output files — these don't belong in version control
+matches_*.txt
+venue_schedule_*.txt
+output*.log
+output*.txt
+*.zip
