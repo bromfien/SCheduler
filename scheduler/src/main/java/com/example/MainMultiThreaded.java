@@ -4,11 +4,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +34,6 @@ public class MainMultiThreaded {
     // Per-thread current week — initialised in main() once nThreads is known.
     private static volatile AtomicIntegerArray threadCurrentWeek;
 
-    // Worker threads queue log messages here; the status thread prints them.
-    private static final ConcurrentLinkedQueue<String> logQueue = new ConcurrentLinkedQueue<>();
-
     // Serialises all console output and System.setOut redirects.
     private static final Object outputLock = new Object();
 
@@ -59,7 +54,7 @@ public class MainMultiThreaded {
             groupMatchCount[i] = allCourtElements.get(i).size() / 2;
         }
 
-        int nThreads      = Runtime.getRuntime().availableProcessors();
+        int nThreads      = Runtime.getRuntime().availableProcessors() - 1;
         threadCurrentWeek = new AtomicIntegerArray(nThreads);
 
         // Start the live progress display before launching workers.
@@ -107,26 +102,12 @@ public class MainMultiThreaded {
                 MatchMatrix matches;
                 MatchMatrix temp_matches;
 
-                // Per-attempt diagnostic counters
-                int  break_counter_1 = 0;
-                int  break_counter_2 = 0;
-                long loop1Time       = 0;
-                long loop2Time       = 0;
-                long startTime;
-                int  restartCount    = 0;
-                long searchStart     = System.currentTimeMillis();
-                int  maxWeekReached  = 0;
-                int[] groupFailCounts = new int[numCourtGroups];
-                int[] weekRetriesTemp = new int[WEEKS];
-
                 // ── Search loop — runs until Ctrl+C ───────────────────────────
                 while (!Thread.currentThread().isInterrupted()) {
 
-                    restartCount++;
                     matches = new MatchMatrix();
                     totalAttempts.incrementAndGet();
                     int match_pairings_attempts_counter = 1;
-                    java.util.Arrays.fill(weekRetriesTemp, 0);
 
                     int weeksReached = 0;
 
@@ -154,14 +135,9 @@ public class MainMultiThreaded {
                             int match_attempts_counter = 1;
 
                             // ── Phase 1: randomly fill this group's match slots ──
-                            startTime = System.nanoTime();
-
                             while (elements_counter < elements_total) {
 
                                 if (match_attempts_counter++ % 50_000 == 0) {
-                                    loop1Time += (System.nanoTime() - startTime);
-                                    break_counter_1++;
-                                    maxWeekReached = Math.max(maxWeekReached, weeks_counter + 1);
                                     break outerloop;
                                 }
 
@@ -187,14 +163,11 @@ public class MainMultiThreaded {
                                 }
                             } // Phase 1 while
 
-                            loop1Time += (System.nanoTime() - startTime);
-
                             // ── Phase 2: bitmask DP perfect matching + extraction ──
                             //
                             // Builds dp[mask] = "can teams in mask be perfectly matched
                             // using unplayed pairs?", then backtracks to extract it.
                             // No random search — deterministic, O(2^N × N) per call.
-                            startTime = System.nanoTime();
 
                             // Collect Phase 1 teams for this group
                             int sliceStart = elements_counter - courtMatches;
@@ -270,9 +243,6 @@ public class MainMultiThreaded {
 
                             if (!matches_found) {
 
-                                groupFailCounts[court_counter]++;
-                                weekRetriesTemp[weeks_counter]++;
-
                                 match_count      = (match_count / MATCHES_PER_WEEK) * MATCHES_PER_WEEK + 1;
                                 elements_total   = 0;
                                 elements_counter = 0;
@@ -280,57 +250,18 @@ public class MainMultiThreaded {
                                 temp_matches     = matches.copy();
 
                                 if (match_pairings_attempts_counter++ % 1_000 == 0) {
-                                    break_counter_2++;
-                                    loop2Time += (System.nanoTime() - startTime);
-                                    maxWeekReached = Math.max(maxWeekReached, weeks_counter + 1);
-                                    if (weeks_counter + 1 == WEEKS) {
-                                        logStats(threadId, weeks_counter + 1,
-                                            break_counter_1, break_counter_2,
-                                            loop1Time, loop2Time, maxWeekReached,
-                                            groupFailCounts, weekRetriesTemp, restartCount,
-                                            searchStart);
-                                    }
                                     break outerloop;
                                 }
                             }
-
-                            loop2Time += (System.nanoTime() - startTime);
 
                         } // court loop
 
                         matches = temp_matches.copy();
 
-                        // Log milestone at week WEEKS-1
-                        if (weeks_counter + 1 == WEEKS - 1) {
-                            logStats(threadId, weeks_counter + 1,
-                                break_counter_1, break_counter_2,
-                                loop1Time, loop2Time, maxWeekReached,
-                                groupFailCounts, weekRetriesTemp, restartCount,
-                                searchStart);
-                            break_counter_1 = 0;
-                            break_counter_2 = 0;
-                            loop1Time       = 0;
-                            loop2Time       = 0;
-                            maxWeekReached  = 0;
-                            java.util.Arrays.fill(groupFailCounts, 0);
-                            java.util.Arrays.fill(weekRetriesTemp, 0);
-                            restartCount    = 0;
-                            searchStart     = System.currentTimeMillis();
-                        }
-
                         // ── Full solution found — write file and keep searching ──
                         if (weeks_counter + 1 == WEEKS) {
                             int solNum = solutionCount.incrementAndGet();
                             writeSolution(matches, threadId, solNum);
-                            break_counter_1 = 0;
-                            break_counter_2 = 0;
-                            loop1Time       = 0;
-                            loop2Time       = 0;
-                            maxWeekReached  = 0;
-                            java.util.Arrays.fill(groupFailCounts, 0);
-                            java.util.Arrays.fill(weekRetriesTemp, 0);
-                            restartCount    = 0;
-                            searchStart     = System.currentTimeMillis();
                         }
 
                     } // weeks loop
@@ -352,13 +283,10 @@ public class MainMultiThreaded {
 
     private static void startStatusDisplay(int nThreads) {
 
-        final int    STATUS_LINES = 5;
-        final int    WIDTH        = 66;
-        final String SEP          = "+" + "-".repeat(WIDTH - 2) + "+";
+        final int STATUS_LINES = 5;
 
         Thread statusThread = new Thread(() -> {
-            boolean firstDraw      = true;
-            int     prevExtraLines = 0;
+            boolean firstDraw = true;
 
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -373,7 +301,8 @@ public class MainMultiThreaded {
                 int    sols         = solutionCount.get();
                 long   attempts     = totalAttempts.get();
                 double elapsedMin   = elapsed / 60_000.0;
-                double solRate      = elapsedMin > 0.001 ? sols     / elapsedMin : 0.0;
+                double elapsedHr    = elapsed / 3_600_000.0;
+                double solRate      = elapsedHr  > 0.001 ? sols     / elapsedHr  : 0.0;
                 double attRate      = elapsedMin > 0.001 ? attempts / elapsedMin : 0.0;
                 int    peak         = peakWeek.get() + 1;
 
@@ -384,52 +313,43 @@ public class MainMultiThreaded {
                          .append(threadCurrentWeek.get(i) + 1);
                 }
 
-                String line1 = cell(WIDTH,
-                    lbl("Running",   formatMs(elapsed)),
-                    lbl("Threads",   String.valueOf(nThreads)),
-                    lbl("Attempts",  String.format("%,d", attempts)));
-                String line2 = cell(WIDTH,
-                    lbl("Solutions", String.format("%,d", sols)),
-                    lbl("Sol/min",   String.format("%.2f", solRate)),
-                    lbl("Last sol",  formatMs(sinceLastSol) + " ago"));
-                String line3 = cell(WIDTH,
-                    lbl("Att/min",   String.format("%,.0f", attRate)),
-                    lbl("Peak week", peak + "/" + WEEKS),
-                    lbl("Wks",       wkStr.toString()));
+                String c1r1 = lbl("Running",   formatMs(elapsed));
+                String c1r2 = lbl("Solutions", String.format("%,d", sols));
+                String c1r3 = lbl("Att/min",   String.format("%,.0f", attRate));
+
+                String c2r1 = lbl("Threads",   String.valueOf(nThreads));
+                String c2r2 = lbl("Sol/hr",    String.format("%.2f", solRate));
+                String c2r3 = lbl("Peak week", peak + "/" + WEEKS);
+
+                String c3r1 = lbl("Attempts",  String.format("%,d", attempts));
+                String c3r2 = lbl("Last sol",  formatMs(sinceLastSol) + " ago");
+                String c3r3 = lbl("Wks",       wkStr.toString());
+
+                int w1 = Math.max(c1r1.length(), Math.max(c1r2.length(), c1r3.length()));
+                int w2 = Math.max(c2r1.length(), Math.max(c2r2.length(), c2r3.length()));
+                int w3 = Math.max(c3r1.length(), Math.max(c3r2.length(), c3r3.length()));
+
+                String rowFmt = "| %-" + w1 + "s  |  %-" + w2 + "s  |  %-" + w3 + "s |";
+                String sep    = "+" + "-".repeat(w1 + w2 + w3 + 12) + "+";
 
                 synchronized (outputLock) {
-                    List<String> msgs = new ArrayList<>();
-                    String m;
-                    while ((m = logQueue.poll()) != null) msgs.add(m);
-                    int extra = msgs.size();
-
                     if (!firstDraw) {
-                        System.out.print("\033[" + (STATUS_LINES + prevExtraLines) + "A");
+                        System.out.print("\033[" + STATUS_LINES + "A");
                         System.out.print("\033[0J");
                     }
-                    firstDraw      = false;
-                    prevExtraLines = extra;
+                    firstDraw = false;
 
-                    for (String msg : msgs) System.out.println(msg);
-                    System.out.println(SEP);
-                    System.out.println(line1);
-                    System.out.println(line2);
-                    System.out.println(line3);
-                    System.out.println(SEP);
+                    System.out.println(sep);
+                    System.out.printf(rowFmt + "%n", c1r1, c2r1, c3r1);
+                    System.out.printf(rowFmt + "%n", c1r2, c2r2, c3r2);
+                    System.out.printf(rowFmt + "%n", c1r3, c2r3, c3r3);
+                    System.out.println(sep);
                     System.out.flush();
                 }
             }
         });
         statusThread.setDaemon(true);
         statusThread.start();
-    }
-
-    private static String cell(int width, String... segments) {
-        String inner = String.join("  |  ", segments);
-        int target = width - 4;
-        if (inner.length() > target) inner = inner.substring(0, target);
-        else while (inner.length() < target) inner += ' ';
-        return "| " + inner + " |";
     }
 
     private static String lbl(String label, String value) {
@@ -439,70 +359,6 @@ public class MainMultiThreaded {
     private static String formatMs(long millis) {
         long s = Math.max(millis, 0) / 1000;
         return String.format("%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60);
-    }
-
-    // ── Logging ───────────────────────────────────────────────────────────────
-
-    /**
-     * Queues a diagnostic log message (printed by the status thread above
-     * the status bar so it scrolls naturally).
-     */
-    private static void logStats(
-            int threadId, int weeksReached,
-            int counter1, int counter2,
-            long loop1Time, long loop2Time,
-            int maxWeekReached,
-            int[] groupFailCounts,
-            int[] weekRetries,
-            int restartCount,
-            long searchStart) {
-
-        String timeNow    = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        double elapsedSec = (System.currentTimeMillis() - searchStart) / 1000.0;
-        long   totalTime  = loop1Time + loop2Time;
-        int    l1pct      = totalTime > 0 ? (int)(100L * loop1Time / totalTime) : 0;
-
-        if (weeksReached == WEEKS) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("[T%d] No solution  %s  G0:%s",
-                threadId, timeNow, fmtK(groupFailCounts[0])));
-            for (int i = 1; i < groupFailCounts.length; i++) {
-                sb.append(String.format("  G%d:%s", i, fmtK(groupFailCounts[i])));
-            }
-            logQueue.offer(sb.toString());
-            return;
-        }
-
-        // Week milestone line
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("[T%d] Wk%d OK  %5.1fs  %d restarts  MaxWk:%d  %s",
-            threadId, weeksReached, elapsedSec, restartCount, maxWeekReached, timeNow));
-        sb.append(String.format("  C1:%5d  C2:%4d  L1:%2d%%  L2:%2d%%",
-            counter1, counter2, l1pct, 100 - l1pct));
-
-        // Append per-group failures
-        sb.append("  |");
-        for (int i = 0; i < groupFailCounts.length; i++) {
-            sb.append(String.format("  G%d:%s", i, fmtK(groupFailCounts[i])));
-        }
-
-        // Append non-zero week retries
-        boolean anyRetry = false;
-        for (int w = 0; w < weeksReached; w++) {
-            if (weekRetries[w] > 0) {
-                if (!anyRetry) sb.append("  |");
-                sb.append(String.format("  W%d:%d", w + 1, weekRetries[w]));
-                anyRetry = true;
-            }
-        }
-
-        logQueue.offer(sb.toString());
-    }
-
-    private static String fmtK(int n) {
-        if (n >= 1_000_000) return String.format("%dM", Math.round(n / 1_000_000.0));
-        if (n >= 1_000)     return String.format("%dK", Math.round(n / 1_000.0));
-        return Integer.toString(n);
     }
 
     // ── File output ───────────────────────────────────────────────────────────
@@ -529,8 +385,6 @@ public class MainMultiThreaded {
             }
         }
 
-        logQueue.offer(String.format(
-            "[T%d] Solution #%,d saved → %s", threadId, solutionNum, filename));
     }
 
     // ── Court count summary ───────────────────────────────────────────────────
