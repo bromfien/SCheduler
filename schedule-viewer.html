@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Viewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --surface3:  #1c2128;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --accent:    #58a6ff;
+      --green:     #3fb950;
+      --red:       #f85149;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding: 28px 24px 60px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .page { max-width: 1440px; margin: 0 auto; }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .topbar h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      flex: 1;
+    }
+    .topbar h1 span {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-left: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .15s, transform .1s;
+      user-select: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--surface3); }
+
+    /* ── Drop zone ── */
+    #dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 96px 40px;
+      text-align: center;
+      color: var(--muted);
+      transition: border-color .2s, background .2s;
+      cursor: pointer;
+    }
+    #dropzone:hover, #dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(88,166,255,.04);
+      color: var(--text);
+    }
+    #dropzone .drop-icon { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+    #dropzone p { font-size: 1rem; }
+    #dropzone small { font-size: 0.8rem; margin-top: 6px; display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Info pills ── */
+    .info-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .info-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .info-pill strong { color: var(--text); }
+    .info-pill.score { border-color: rgba(88,166,255,.4); color: var(--accent); }
+    .info-pill.score strong { color: var(--accent); }
+
+    /* ── Team chips ── */
+    .legend-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    /* ── Shared table styles ── */
+    .table-wrap { overflow-x: auto; }
+
+    /* ── matches_*.txt schedule table ── */
+    .sched-table {
+      border-collapse: separate;
+      border-spacing: 3px;
+      min-width: 100%;
+      font-size: 0.78rem;
+    }
+    .sched-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 7px 14px;
+      border-radius: 5px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .sched-table th:first-child { min-width: 58px; }
+    .sched-table td {
+      background: var(--surface2);
+      padding: 7px 14px;
+      border-radius: 5px;
+      vertical-align: middle;
+    }
+    .sched-table tr.s2 td { background: var(--surface3); }
+    .wk-cell {
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      text-align: center;
+      white-space: nowrap;
+      background: transparent !important;
+    }
+    .sched-table tr.gap td { height: 6px; background: transparent !important; padding: 0; }
+    .session-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      opacity: 0.6;
+      display: block;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .matchup { display: flex; align-items: center; gap: 6px; }
+    .vs-label { color: var(--muted); font-size: 0.65rem; font-weight: 600; }
+    .bye { color: var(--muted); font-style: italic; font-size: 0.75rem; }
+    .sched-table tbody tr:not(.gap):hover td { filter: brightness(1.12); }
+
+    /* ── venue_schedule_*.txt schedule table ── */
+    .vs-table {
+      border-collapse: separate;
+      border-spacing: 3px;
+      min-width: 100%;
+      font-size: 0.78rem;
+    }
+    .vs-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 8px 16px;
+      border-radius: 5px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .vs-table th:first-child { min-width: 64px; }
+    .vs-table td {
+      background: var(--surface2);
+      padding: 10px 14px;
+      border-radius: 5px;
+      vertical-align: top;
+    }
+    .vs-table tr.gap td { height: 6px; background: transparent !important; padding: 0; }
+    .vs-table .wk-cell {
+      vertical-align: middle;
+      text-align: center;
+      background: transparent !important;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .games-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 12px;
+    }
+    .vs-table tbody tr:hover td { filter: brightness(1.12); }
+
+    /* ── Stats table ── */
+    .stats-table {
+      border-collapse: separate;
+      border-spacing: 3px;
+      min-width: 100%;
+      font-size: 0.8rem;
+    }
+    .stats-table th, .stats-table td {
+      border-radius: 5px;
+      padding: 7px 18px;
+    }
+    .stats-table th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      text-align: right;
+    }
+    .stats-table th:first-child { text-align: left; min-width: 90px; }
+    .stats-table td {
+      background: var(--surface2);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .stats-table td:first-child { text-align: left; }
+    .stats-table tbody tr:hover td { filter: brightness(1.12); }
+    .stat-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .stat-bar { height: 4px; border-radius: 2px; opacity: 0.6; min-width: 2px; }
+    .status-ok  { color: var(--green); font-weight: 700; }
+    .status-err { color: var(--red);   font-weight: 700; }
+
+    /* ── Format badge ── */
+    .format-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .badge-matches  { background: rgba(88,166,255,.15); color: var(--accent); }
+    .badge-vs       { background: rgba(63,185,80,.15);  color: var(--green); }
+
+    /* ── Animations ── */
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    #content > * { animation: fadeIn .3s ease both; }
+    #content > *:nth-child(1) { animation-delay: .04s; }
+    #content > *:nth-child(2) { animation-delay: .08s; }
+    #content > *:nth-child(3) { animation-delay: .12s; }
+    #content > *:nth-child(4) { animation-delay: .16s; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <h1>Schedule Viewer <span id="fileName"></span></h1>
+    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">&#128193; Open File</button>
+    <button class="btn btn-ghost" id="closeBtn" style="display:none" onclick="resetView()">&#10005; Close</button>
+    <input type="file" id="fileInput" accept=".txt,.log" style="display:none">
+  </div>
+
+  <div id="dropzone">
+    <span class="drop-icon">&#128203;</span>
+    <p>Drop a schedule <code>.txt</code> file here, or click <strong>Open File</strong></p>
+    <small>Supports <code>matches_*.txt</code> and <code>venue_schedule_*.txt</code> formats</small>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="card">
+      <div class="card-title">Schedule Info</div>
+      <div class="info-row" id="infoRow"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Team Colours</div>
+      <div class="legend-wrap" id="legendWrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Match Schedule</div>
+      <div class="table-wrap" id="schedWrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Venue Distribution</div>
+      <div class="table-wrap">
+        <table class="stats-table" id="statsTable"></table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Colour palette (20 distinct colours)
+// ─────────────────────────────────────────────────────────────────────────────
+const PALETTE = [
+  { bg: '#FF6B6B', fg: '#2b0000' },
+  { bg: '#4ECDC4', fg: '#002b28' },
+  { bg: '#58a6ff', fg: '#001433' },
+  { bg: '#F7B731', fg: '#2b1c00' },
+  { bg: '#C47AFF', fg: '#1a003d' },
+  { bg: '#26de81', fg: '#002b10' },
+  { bg: '#F97316', fg: '#2b1000' },
+  { bg: '#EC4899', fg: '#2b0019' },
+  { bg: '#22d3ee', fg: '#001d2b' },
+  { bg: '#a3e635', fg: '#172000' },
+  { bg: '#fb923c', fg: '#2b1200' },
+  { bg: '#818cf8', fg: '#08082b' },
+  { bg: '#34d399', fg: '#002b1c' },
+  { bg: '#fde68a', fg: '#2b2200' },
+  { bg: '#f472b6', fg: '#2b0019' },
+  { bg: '#67e8f9', fg: '#001b2b' },
+  { bg: '#a78bfa', fg: '#0f002b' },
+  { bg: '#4ade80', fg: '#002b10' },
+  { bg: '#fca5a5', fg: '#2b0000' },
+  { bg: '#93c5fd', fg: '#001433' },
+];
+
+function teamColor(n)         { return PALETTE[(n - 1) % PALETTE.length]; }
+function makeChip(n, label)   {
+  const c = teamColor(n), el = document.createElement('span');
+  el.className = 'chip';
+  el.style.background = c.bg;
+  el.style.color = c.fg;
+  el.textContent = label ?? `T${n}`;
+  return el;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared: parse "T 4 vs T16" → { t1, t2 }
+// ─────────────────────────────────────────────────────────────────────────────
+function parseMatchup(str) {
+  const m = str.match(/T\s*(\d+)\s+vs\s+T\s*(\d+)/i);
+  return m ? { t1: parseInt(m[1]), t2: parseInt(m[2]) } : null;
+}
+
+function matchupEl(str) {
+  const mp = parseMatchup(str);
+  if (!mp) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'matchup';
+  wrap.appendChild(makeChip(mp.t1));
+  const vs = document.createElement('span'); vs.className = 'vs-label'; vs.textContent = 'vs';
+  wrap.appendChild(vs);
+  wrap.appendChild(makeChip(mp.t2));
+  return wrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Format detection
+// ─────────────────────────────────────────────────────────────────────────────
+function detectFormat(text) {
+  if (/WEEKLY SCHEDULE BY VENUE/i.test(text)) return 'venue_schedule';
+  if (/\bMain\s+[A-Z0-9]\b/.test(text))       return 'matches';
+  return 'unknown';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parser A — matches_*.txt  (tab-grid format)
+// ─────────────────────────────────────────────────────────────────────────────
+function parseMatchesFile(text) {
+  const lines = text.split(/\r?\n/);
+
+  let headerIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/\bMain\s+[A-Z0-9]\b/i.test(lines[i])) { headerIdx = i; break; }
+  }
+  if (headerIdx === -1) throw new Error('Cannot find schedule header (Main A / Main 1)');
+
+  const venues = lines[headerIdx].split('\t').map(s => s.trim()).filter(Boolean);
+
+  const weekMap = {};
+  let endOfSchedule = lines.length;
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    if (lines[i].trim() === '') { endOfSchedule = i; break; }
+    const parts = lines[i].split('\t');
+    const m = parts[0].trim().match(/Week\s+(\d+)/i);
+    if (!m) continue;
+    const wk = parseInt(m[1]);
+    if (!weekMap[wk]) weekMap[wk] = [];
+    weekMap[wk].push(parts.slice(1).map(s => s.trim()));
+  }
+
+  let statsHeaders = [];
+  const stats = [];
+  for (let i = endOfSchedule; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const tm = line.match(/^T\s*(\d+)\s+([\d\s]+)$/);
+    if (tm) {
+      stats.push({ team: parseInt(tm[1]), values: tm[2].trim().split(/\s+/).map(Number) });
+    } else {
+      const cand = line.split(/\s+/).filter(Boolean);
+      if (cand.length > 0 && !/\d/.test(cand[0])) statsHeaders = cand;
+    }
+  }
+
+  return { format: 'matches', venues, weekMap, stats, statsHeaders };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parser B — venue_schedule_*.txt  (prose format)
+// ─────────────────────────────────────────────────────────────────────────────
+function parseVenueScheduleFile(text) {
+  const lines = text.split(/\r?\n/);
+
+  // Metadata
+  let sourceFile = '', targets = '', score = '', teamsInRange = '';
+  for (const line of lines) {
+    const sf = line.match(/derived from:\s*(.+)/i);
+    if (sf) sourceFile = sf[1].trim();
+    if (/^TARGETS/i.test(line)) targets = line.replace(/^TARGETS\s*/i, '').trim();
+    const sc = line.match(/Optimality score[^:]*:\s*([\d.]+)/i);
+    if (sc) score = sc[1];
+    const tr = line.match(/Teams within target range:\s*(\S+)/i);
+    if (tr) teamsInRange = tr[1];
+  }
+
+  // Team venue counts
+  let statsHeaders = ['Main', 'BP', 'Gerry', 'Total'];
+  const stats = [];
+  let inCounts = false;
+  for (const line of lines) {
+    if (/TEAM VENUE COUNTS/i.test(line)) { inCounts = true; continue; }
+    if (/PAIR-SLOT|WEEKLY SCHEDULE/i.test(line)) { inCounts = false; }
+    if (!inCounts) continue;
+    const m = line.match(/T\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([✓✗]\S*)/);
+    if (m) {
+      stats.push({
+        team: parseInt(m[1]),
+        values: [parseInt(m[2]), parseInt(m[3]), parseInt(m[4]), parseInt(m[5])],
+        status: m[6],
+      });
+    }
+  }
+
+  // Weekly schedule
+  const weekMap = {};    // weekNum → { VenueName: [matchup strings] }
+  const venueOrder = []; // preserve order of first appearance
+  let inSchedule = false, weekNum = null;
+
+  for (const line of lines) {
+    if (/WEEKLY SCHEDULE BY VENUE/i.test(line)) { inSchedule = true; continue; }
+    if (!inSchedule) continue;
+
+    const wm = line.match(/^Week\s+(\d+)/i);
+    if (wm) { weekNum = parseInt(wm[1]); weekMap[weekNum] = {}; continue; }
+
+    if (weekNum !== null) {
+      const vm = line.match(/^\s+(\w+(?:\s+\w+)?)\s*:\s*(.+)/);
+      if (vm) {
+        const vName = vm[1].trim();
+        if (!venueOrder.includes(vName)) venueOrder.push(vName);
+        const matchups = [];
+        const re = /T\s*\d+\s+vs\s+T\s*\d+/gi;
+        let hit;
+        while ((hit = re.exec(vm[2])) !== null) matchups.push(hit[0]);
+        weekMap[weekNum][vName] = matchups;
+      }
+    }
+  }
+
+  return { format: 'venue_schedule', weekMap, venueOrder, stats, statsHeaders,
+           sourceFile, targets, score, teamsInRange };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared: render legend + info row
+// ─────────────────────────────────────────────────────────────────────────────
+function renderHeader(teams, pills) {
+  const legendWrap = document.getElementById('legendWrap');
+  legendWrap.innerHTML = '';
+  teams.forEach(n => legendWrap.appendChild(makeChip(n, `Team ${n}`)));
+
+  const infoRow = document.getElementById('infoRow');
+  infoRow.innerHTML = '';
+  pills.forEach(([label, val, cls]) => {
+    const p = document.createElement('div');
+    p.className = 'info-pill' + (cls ? ' ' + cls : '');
+    p.innerHTML = `${label}: <strong>${val}</strong>`;
+    infoRow.appendChild(p);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Renderer A — matches format
+// ─────────────────────────────────────────────────────────────────────────────
+function renderMatches(data, filename) {
+  const { venues, weekMap, stats, statsHeaders } = data;
+  const weeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
+
+  const teamSet = new Set();
+  weeks.forEach(wk => weekMap[wk].forEach(session =>
+    session.forEach(s => { const m = parseMatchup(s); if (m) { teamSet.add(m.t1); teamSet.add(m.t2); } })
+  ));
+  const teams = [...teamSet].sort((a, b) => a - b);
+
+  document.getElementById('fileName').innerHTML =
+    `<span>— ${filename}</span><span class="format-badge badge-matches">Grid format</span>`;
+
+  renderHeader(teams, [
+    ['Teams', teams.length],
+    ['Weeks', weeks.length],
+    ['Venues', venues.length],
+    ['Sessions / week', weekMap[weeks[0]]?.length ?? '?'],
+  ]);
+
+  // Schedule table
+  const wrap = document.getElementById('schedWrap');
+  wrap.innerHTML = '';
+  const table = document.createElement('table');
+  table.className = 'sched-table';
+  wrap.appendChild(table);
+
+  const thead = table.createTHead();
+  const hRow  = thead.insertRow();
+  const thWk  = document.createElement('th'); thWk.textContent = 'Week'; hRow.appendChild(thWk);
+  venues.forEach(v => { const th = document.createElement('th'); th.textContent = v; hRow.appendChild(th); });
+
+  const tbody = table.createTBody();
+  weeks.forEach((wk, wi) => {
+    weekMap[wk].forEach((matchups, si) => {
+      const tr = tbody.insertRow();
+      tr.className = si === 0 ? 's1' : 's2';
+
+      if (si === 0) {
+        const tdWk = tr.insertCell();
+        tdWk.className = 'wk-cell';
+        tdWk.textContent = `Wk ${wk}`;
+        tdWk.rowSpan = weekMap[wk].length;
+        tdWk.style.verticalAlign = 'middle';
+      }
+
+      venues.forEach((_, vi) => {
+        const td  = tr.insertCell();
+        const str = matchups[vi] ?? '';
+        const el  = matchupEl(str);
+        if (el) {
+          const lbl = document.createElement('span');
+          lbl.className = 'session-label';
+          lbl.textContent = `Session ${si + 1}`;
+          td.appendChild(lbl);
+          td.appendChild(el);
+        } else if (str) {
+          td.textContent = str; td.style.color = 'var(--muted)';
+        } else {
+          const b = document.createElement('span'); b.className = 'bye'; b.textContent = '—'; td.appendChild(b);
+        }
+      });
+    });
+
+    if (wi < weeks.length - 1) {
+      const gap = tbody.insertRow(); gap.className = 'gap';
+      for (let c = 0; c <= venues.length; c++) gap.insertCell();
+    }
+  });
+
+  renderStats(stats, statsHeaders, teams);
+  showContent();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Renderer B — venue_schedule format
+// ─────────────────────────────────────────────────────────────────────────────
+function renderVenueSchedule(data, filename) {
+  const { weekMap, venueOrder, stats, statsHeaders, sourceFile, targets, score, teamsInRange } = data;
+  const weeks = Object.keys(weekMap).map(Number).sort((a, b) => a - b);
+
+  const teamSet = new Set();
+  weeks.forEach(wk =>
+    Object.values(weekMap[wk]).forEach(matchups =>
+      matchups.forEach(s => { const m = parseMatchup(s); if (m) { teamSet.add(m.t1); teamSet.add(m.t2); } })
+    )
+  );
+  const teams = [...teamSet].sort((a, b) => a - b);
+
+  document.getElementById('fileName').innerHTML =
+    `<span>— ${filename}</span><span class="format-badge badge-vs">Venue schedule</span>`;
+
+  const pills = [
+    ['Teams', teams.length],
+    ['Weeks', weeks.length],
+    ['Venues', venueOrder.join(' · ')],
+  ];
+  if (teamsInRange) pills.push(['In target range', teamsInRange]);
+  if (score)        pills.push(['Optimality score', score, 'score']);
+
+  renderHeader(teams, pills);
+
+  // Schedule table — columns: Week | (one column per venue group)
+  const wrap = document.getElementById('schedWrap');
+  wrap.innerHTML = '';
+  const table = document.createElement('table');
+  table.className = 'vs-table';
+  wrap.appendChild(table);
+
+  const thead = table.createTHead();
+  const hRow  = thead.insertRow();
+  const thWk  = document.createElement('th'); thWk.textContent = 'Week'; hRow.appendChild(thWk);
+  venueOrder.forEach(v => {
+    const th = document.createElement('th'); th.textContent = v; hRow.appendChild(th);
+  });
+
+  const tbody = table.createTBody();
+  weeks.forEach((wk, wi) => {
+    const tr = tbody.insertRow();
+
+    const tdWk = tr.insertCell();
+    tdWk.className = 'wk-cell';
+    tdWk.textContent = `Wk ${wk}`;
+
+    venueOrder.forEach(vName => {
+      const td       = tr.insertCell();
+      const matchups = weekMap[wk][vName] ?? [];
+      if (matchups.length === 0) {
+        const b = document.createElement('span'); b.className = 'bye'; b.textContent = '—'; td.appendChild(b);
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'games-grid';
+      matchups.forEach(s => {
+        const el = matchupEl(s);
+        if (el) grid.appendChild(el);
+      });
+      td.appendChild(grid);
+    });
+
+    if (wi < weeks.length - 1) {
+      const gap = tbody.insertRow(); gap.className = 'gap';
+      for (let c = 0; c <= venueOrder.length; c++) gap.insertCell();
+    }
+  });
+
+  // Stats — include status column
+  renderStats(stats, statsHeaders, teams, true);
+  showContent();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared: render stats table
+// hasStatus = true adds the ✓/✗ column
+// ─────────────────────────────────────────────────────────────────────────────
+function renderStats(stats, headers, teams, hasStatus = false) {
+  const statsTable = document.getElementById('statsTable');
+  statsTable.innerHTML = '';
+  if (stats.length === 0) return;
+
+  const numCols = stats[0].values.length;
+  const hdrs = headers.length >= numCols
+    ? headers.slice(0, numCols)
+    : Array.from({ length: numCols }, (_, i) => headers[i] ?? `Group ${i + 1}`);
+
+  const colMax = Array(numCols).fill(0);
+  stats.forEach(({ values }) => values.forEach((v, i) => { if (v > colMax[i]) colMax[i] = v; }));
+
+  const sthead = statsTable.createTHead();
+  const shr    = sthead.insertRow();
+  const thT    = document.createElement('th'); thT.textContent = 'Team'; shr.appendChild(thT);
+  hdrs.forEach(h => { const th = document.createElement('th'); th.textContent = h; shr.appendChild(th); });
+  if (hasStatus) {
+    const th = document.createElement('th'); th.textContent = 'Status'; shr.appendChild(th);
+  }
+
+  const stbody = statsTable.createTBody();
+  stats.forEach(({ team, values, status }) => {
+    const tr     = stbody.insertRow();
+    const tdTeam = tr.insertCell();
+    tdTeam.appendChild(makeChip(team));
+
+    values.slice(0, numCols).forEach((v, i) => {
+      const td   = tr.insertCell();
+      const wrap = document.createElement('div'); wrap.className = 'stat-bar-wrap';
+      const bar  = document.createElement('div'); bar.className = 'stat-bar';
+      bar.style.width      = `${colMax[i] > 0 ? (v / colMax[i]) * 60 : 0}px`;
+      bar.style.background = teamColor(team).bg;
+      const num = document.createElement('span'); num.textContent = v;
+      wrap.appendChild(bar); wrap.appendChild(num);
+      td.appendChild(wrap);
+    });
+
+    if (hasStatus && status !== undefined) {
+      const td = tr.insertCell();
+      td.className = status.startsWith('✓') ? 'status-ok' : 'status-err';
+      td.textContent = status;
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function showContent() {
+  document.getElementById('dropzone').style.display = 'none';
+  document.getElementById('content').style.display  = '';
+  document.getElementById('closeBtn').style.display = '';
+}
+
+function resetView() {
+  document.getElementById('content').style.display  = 'none';
+  document.getElementById('dropzone').style.display = '';
+  document.getElementById('closeBtn').style.display = 'none';
+  document.getElementById('fileName').textContent   = '';
+  document.getElementById('fileInput').value        = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// File loading
+// ─────────────────────────────────────────────────────────────────────────────
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text   = e.target.result;
+    const format = detectFormat(text);
+    try {
+      if      (format === 'venue_schedule') renderVenueSchedule(parseVenueScheduleFile(text), file.name);
+      else if (format === 'matches')        renderMatches(parseMatchesFile(text),        file.name);
+      else throw new Error('Unrecognised file format.\nExpected a matches_*.txt or venue_schedule_*.txt file.');
+    } catch (err) {
+      alert('Error: ' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('click', () => document.getElementById('fileInput').click());
+document.body.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+document.body.addEventListener('dragleave', e => { if (!e.relatedTarget) dz.classList.remove('drag-over'); });
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+</script>
+</body>
+</html>

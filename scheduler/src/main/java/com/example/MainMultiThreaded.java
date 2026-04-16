@@ -369,7 +369,11 @@ public class MainMultiThreaded {
 
         String timestamp = LocalDateTime.now()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
-        String filename = "matches_" + timestamp + "_t" + threadId + ".txt";
+        String filename  = "matches_"        + timestamp + "_t" + threadId + ".txt";
+        String venueFile = "venue_schedule_" + timestamp + "_t" + threadId + ".txt";
+
+        // Run venue optimization outside the lock — pure computation, no I/O
+        VenueOptimizer.OptResult venueResult = VenueOptimizer.optimize(matches);
 
         synchronized (outputLock) {
             try (PrintStream fileOut = new PrintStream(new FileOutputStream(filename))) {
@@ -382,6 +386,11 @@ public class MainMultiThreaded {
                 System.setOut(originalOut);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+            if (venueResult != null) {
+                VenueOptimizer.writeOutput(venueResult, filename, venueFile);
+                VenueOptimizer.appendSummary(venueResult, filename);
             }
         }
 
