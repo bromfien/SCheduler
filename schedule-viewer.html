@@ -399,21 +399,23 @@ function matchupEl(str) {
 //   targetRanges: { "Main":[6,8], "BP":[2,4], "Gerry":[2,4] } parsed from file,
 //   or null to fall back to IQR (used when no TARGETS line is present).
 // ─────────────────────────────────────────────────────────────────────────────
-function quartile(sorted, q) {
-  const pos = (sorted.length - 1) * q;
-  const lo = Math.floor(pos), hi = Math.ceil(pos);
-  return lo === hi ? sorted[lo] : sorted[lo] + (pos - lo) * (sorted[hi] - sorted[lo]);
-}
 
 function enrichStats(stats, headers, targetRanges) {
   if (!stats.length) return { stats, headers };
   const n = headers.length;
 
-  // Use explicit ranges from file if available; otherwise derive via IQR
+  // Use explicit ranges from file if available; otherwise derive from the
+  // two most-frequent values in each column (robust for skewed distributions)
   const colTargets = Array.from({ length: n }, (_, i) => {
     if (targetRanges && targetRanges[headers[i]]) return targetRanges[headers[i]];
-    const vals = stats.map(s => s.values[i]).sort((a, b) => a - b);
-    return [quartile(vals, 0.25), quartile(vals, 0.75)];
+    const vals = stats.map(s => s.values[i]);
+    const freq = {};
+    vals.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
+    const top2 = Object.keys(freq).map(Number)
+      .sort((a, b) => freq[b] - freq[a])   // most frequent first
+      .slice(0, 2)
+      .sort((a, b) => a - b);              // then ascending
+    return [top2[0], top2[top2.length - 1]];
   });
 
   const enriched = stats.map(s => {
