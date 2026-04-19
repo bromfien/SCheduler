@@ -395,6 +395,42 @@ function matchupEl(str) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Enrich stats: compute Total + auto-derive Status using IQR target ranges
+// ─────────────────────────────────────────────────────────────────────────────
+function quartile(sorted, q) {
+  const pos = (sorted.length - 1) * q;
+  const lo = Math.floor(pos), hi = Math.ceil(pos);
+  return lo === hi ? sorted[lo] : sorted[lo] + (pos - lo) * (sorted[hi] - sorted[lo]);
+}
+
+function enrichStats(stats, headers) {
+  if (!stats.length) return { stats, headers };
+  const n = headers.length;
+
+  // IQR per column → derive target range automatically
+  const colTargets = Array.from({ length: n }, (_, i) => {
+    const vals = stats.map(s => s.values[i]).sort((a, b) => a - b);
+    return [quartile(vals, 0.25), quartile(vals, 0.75)];
+  });
+
+  const enriched = stats.map(s => {
+    const total = s.values.slice(0, n).reduce((a, b) => a + b, 0);
+    const reasons = [];
+    s.values.slice(0, n).forEach((v, i) => {
+      const [lo, hi] = colTargets[i];
+      if (v < lo || v > hi) reasons.push(`${headers[i]}=${v}`);
+    });
+    return {
+      ...s,
+      values:  [...s.values.slice(0, n), total],
+      status:  reasons.length === 0 ? '✓' : `✗  (${reasons.join(', ')})`,
+    };
+  });
+
+  return { stats: enriched, headers: [...headers, 'Total'] };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Format detection
 // ─────────────────────────────────────────────────────────────────────────────
 function detectFormat(text) {
@@ -430,16 +466,25 @@ function parseMatchesFile(text) {
   }
 
   let statsHeaders = [];
+  let venueCount   = 0;  // venue columns only (excludes Total)
   const stats = [];
   for (let i = endOfSchedule; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
-    const tm = line.match(/^T\s*(\d+)\s+([\d\s]+)$/);
+    if (!line || /^-{3,}/.test(line)) continue;
+
+    // Team data line — stop capturing numbers before any ✓/✗ status text
+    const tm = line.match(/^T\s*(\d+)((?:\s+\d+)+)/);
     if (tm) {
-      stats.push({ team: parseInt(tm[1]), values: tm[2].trim().split(/\s+/).map(Number) });
-    } else {
-      const cand = line.split(/\s+/).filter(Boolean);
-      if (cand.length > 0 && !/\d/.test(cand[0])) statsHeaders = cand;
+      const allVals = tm[2].trim().split(/\s+/).map(Number);
+      const n = venueCount > 0 ? venueCount : allVals.length;
+      stats.push({ team: parseInt(tm[1]), values: allVals.slice(0, n) });
+      continue;
+    }
+
+    // Header line — must contain "Main" and "BP", no digits
+    if (/\bMain\b.*\bBP\b/i.test(line) && !/\d/.test(line)) {
+      statsHeaders = line.split(/\s+/).filter(s => s && s !== 'Team' && s !== 'Total' && s !== 'Status');
+      venueCount   = statsHeaders.length;
     }
   }
 
@@ -603,7 +648,9 @@ function renderMatches(data, filename) {
     }
   });
 
-  renderStats(stats, statsHeaders, teams);
+  const fallbackHdrs = statsHeaders.length ? statsHeaders : ['Main', 'BP', 'Gerry'];
+  const { stats: enriched, headers: enrichedHdrs } = enrichStats(stats, fallbackHdrs);
+  renderStats(enriched, enrichedHdrs, teams, true);
   showContent();
 }
 
@@ -732,6 +779,24 @@ function renderStats(stats, headers, teams, hasStatus = false) {
       td.textContent = status;
     }
   });
+
+  // Summary footer
+  if (hasStatus) {
+    const okCount = stats.filter(s => s.status?.startsWith('✓')).length;
+    const allOk   = okCount === stats.length;
+    const tfoot = statsTable.createTFoot();
+    const ftr   = tfoot.insertRow();
+    const ftd   = ftr.insertCell();
+    ftd.colSpan = 1 + numCols + 1;   // Team col + value cols + Status col
+    ftd.style.cssText = `
+      text-align:right; padding:10px 18px 6px;
+      font-size:0.78rem; font-weight:600;
+      color:${allOk ? 'var(--green)' : 'var(--muted)'};
+      border-top:1px solid var(--border);
+      background:transparent;
+    `;
+    ftd.textContent = `Teams within target range: ${okCount} / ${stats.length}`;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -517,15 +517,37 @@ public class VenueOptimizer {
             }
 
             // ── Team venue counts table ────────────────────────────────────────
+            int totalGames = result.nWeeks * 2;
             pw.println();
-            pw.printf("     %-6s%-4s%-6s%n", "Main", "BP", "Gerry");
+            pw.printf("TARGETS  Main %d\u2013%d   BP %d\u2013%d   Gerry %d\u2013%d   (per team, %d games)%n",
+                MAIN_MIN, MAIN_MAX, BP_MIN, BP_MAX, GERRY_MIN, GERRY_MAX, totalGames);
+            pw.printf("Optimality score (sum of squared deviations): %.1f%n", result.score);
+            pw.println();
+            pw.println("TEAM VENUE COUNTS");
+            pw.printf("  %-6s %6s %6s %6s %6s  %s%n", "Team", "Main", "BP", "Gerry", "Total", "Status");
+            pw.println("  -----------------------------------------");
             for (int t = 0; t < result.nTeams; t++) {
-                pw.printf("T%-2d  %6d%4d%6d%n",
-                    t + 1,
-                    result.finalCounts[t][MAIN],
-                    result.finalCounts[t][BP],
-                    result.finalCounts[t][GERRY]);
+                int m  = result.finalCounts[t][MAIN];
+                int b  = result.finalCounts[t][BP];
+                int g  = result.finalCounts[t][GERRY];
+                int tot = m + b + g;
+                boolean ok = m >= MAIN_MIN && m <= MAIN_MAX
+                          && b >= BP_MIN   && b <= BP_MAX
+                          && g >= GERRY_MIN && g <= GERRY_MAX;
+                String status;
+                if (ok) {
+                    status = "\u2713";
+                } else {
+                    List<String> reasons = new ArrayList<>();
+                    if (m < MAIN_MIN || m > MAIN_MAX)   reasons.add("Main="  + m);
+                    if (b < BP_MIN   || b > BP_MAX)     reasons.add("BP="    + b);
+                    if (g < GERRY_MIN || g > GERRY_MAX) reasons.add("Gerry=" + g);
+                    status = "\u2717  (" + String.join(", ", reasons) + ")";
+                }
+                pw.printf("  T%2d  %6d %6d %6d %6d  %s%n", t + 1, m, b, g, tot, status);
             }
+            pw.println("  -----------------------------------------");
+            pw.printf("  Teams within target range:  %d/%d%n", result.teamsInRange, result.nTeams);
 
         } catch (IOException e) {
             System.err.println("VenueOptimizer: could not write " + outPath + ": " + e.getMessage());
