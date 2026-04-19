@@ -395,7 +395,9 @@ function matchupEl(str) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Enrich stats: compute Total + auto-derive Status using IQR target ranges
+// Enrich stats: compute Total + Status
+//   targetRanges: { "Main":[6,8], "BP":[2,4], "Gerry":[2,4] } parsed from file,
+//   or null to fall back to IQR (used when no TARGETS line is present).
 // ─────────────────────────────────────────────────────────────────────────────
 function quartile(sorted, q) {
   const pos = (sorted.length - 1) * q;
@@ -403,12 +405,13 @@ function quartile(sorted, q) {
   return lo === hi ? sorted[lo] : sorted[lo] + (pos - lo) * (sorted[hi] - sorted[lo]);
 }
 
-function enrichStats(stats, headers) {
+function enrichStats(stats, headers, targetRanges) {
   if (!stats.length) return { stats, headers };
   const n = headers.length;
 
-  // IQR per column → derive target range automatically
+  // Use explicit ranges from file if available; otherwise derive via IQR
   const colTargets = Array.from({ length: n }, (_, i) => {
+    if (targetRanges && targetRanges[headers[i]]) return targetRanges[headers[i]];
     const vals = stats.map(s => s.values[i]).sort((a, b) => a - b);
     return [quartile(vals, 0.25), quartile(vals, 0.75)];
   });
@@ -467,7 +470,23 @@ function parseMatchesFile(text) {
 
   let statsHeaders = [];
   let venueCount   = 0;  // venue columns only (excludes Total)
+  let targetRanges = null;
   const stats = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // TARGETS line: "TARGETS  Main 6–8   BP 2–4   Gerry 2–4 ..."
+    if (/^TARGETS\b/i.test(line)) {
+      targetRanges = {};
+      const re = /(\w+)\s+(\d+)[–\-](\d+)/g;
+      let m;
+      while ((m = re.exec(line)) !== null)
+        targetRanges[m[1]] = [parseInt(m[2]), parseInt(m[3])];
+    }
+  }
+
   for (let i = endOfSchedule; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line || /^-{3,}/.test(line)) continue;
@@ -488,7 +507,7 @@ function parseMatchesFile(text) {
     }
   }
 
-  return { format: 'matches', venues, weekMap, stats, statsHeaders };
+  return { format: 'matches', venues, weekMap, stats, statsHeaders, targetRanges };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -649,7 +668,7 @@ function renderMatches(data, filename) {
   });
 
   const fallbackHdrs = statsHeaders.length ? statsHeaders : ['Main', 'BP', 'Gerry'];
-  const { stats: enriched, headers: enrichedHdrs } = enrichStats(stats, fallbackHdrs);
+  const { stats: enriched, headers: enrichedHdrs } = enrichStats(stats, fallbackHdrs, data.targetRanges ?? null);
   renderStats(enriched, enrichedHdrs, teams, true);
   showContent();
 }
