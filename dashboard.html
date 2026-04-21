@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduler Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f1117;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    #status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: background 0.3s;
+    }
+    #status-dot.live { background: #22c55e; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    #status-label { font-size: 0.85rem; color: #94a3b8; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-sub {
+      font-size: 0.8rem;
+      color: #475569;
+      margin-top: 0.25rem;
+    }
+
+    .card.highlight { border-color: #3b82f6; }
+    .card.highlight .card-value { color: #60a5fa; }
+
+    .card.success { border-color: #22c55e; }
+    .card.success .card-value { color: #4ade80; }
+
+    /* Thread progress */
+    .threads-card {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .threads-title {
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+
+    .thread-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .thread-label {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      width: 2.5rem;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      flex: 1;
+      background: #2d3148;
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      transition: width 0.4s ease;
+    }
+
+    .bar-fill.complete { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
+    .week-label {
+      font-size: 0.78rem;
+      color: #475569;
+      width: 3rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    #last-updated {
+      font-size: 0.75rem;
+      color: #334155;
+      text-align: right;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Scheduler Live Dashboard</h1>
+  <div>
+    <span id="status-dot"></span>
+    <span id="status-label">Connecting...</span>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="card highlight">
+    <div class="card-label">Solutions Found</div>
+    <div class="card-value" id="solutions">—</div>
+    <div class="card-sub" id="sol-rate">— sol/hr</div>
+  </div>
+  <div class="card">
+    <div class="card-label">Running</div>
+    <div class="card-value" id="elapsed">—</div>
+    <div class="card-sub" id="last-sol">last solution: —</div>
+  </div>
+  <div class="card">
+    <div class="card-label">Total Attempts</div>
+    <div class="card-value" id="attempts">—</div>
+    <div class="card-sub" id="att-rate">— att/min</div>
+  </div>
+  <div class="card success">
+    <div class="card-label">Peak Week</div>
+    <div class="card-value" id="peak-week">—</div>
+    <div class="card-sub" id="threads-count">— threads</div>
+  </div>
+</div>
+
+<div class="threads-card">
+  <div class="threads-title">Thread Progress</div>
+  <div id="threads-container"></div>
+</div>
+
+<div id="last-updated"></div>
+
+<script>
+  const HOST = `http://${location.hostname}:8080/metrics`;
+
+  function fmtMs(ms) {
+    const s = Math.floor(Math.max(ms, 0) / 1000);
+    const h = Math.floor(s / 3600).toString().padStart(2, '0');
+    const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+    const sc = (s % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${sc}`;
+  }
+
+  function fmtNum(n) {
+    return n.toLocaleString();
+  }
+
+  function setLive(ok) {
+    const dot   = document.getElementById('status-dot');
+    const label = document.getElementById('status-label');
+    dot.className   = ok ? 'live' : '';
+    label.textContent = ok ? 'Live' : 'Disconnected';
+  }
+
+  function buildThreadRows(threadWeeks, totalWeeks) {
+    const container = document.getElementById('threads-container');
+    // Add rows if needed
+    while (container.children.length < threadWeeks.length) {
+      const i = container.children.length;
+      container.insertAdjacentHTML('beforeend', `
+        <div class="thread-row">
+          <span class="thread-label">T${i}</span>
+          <div class="bar-track"><div class="bar-fill" id="bar-${i}"></div></div>
+          <span class="week-label" id="wk-${i}">—</span>
+        </div>`);
+    }
+    threadWeeks.forEach((week, i) => {
+      const pct   = Math.min((week / totalWeeks) * 100, 100);
+      const bar   = document.getElementById(`bar-${i}`);
+      const label = document.getElementById(`wk-${i}`);
+      bar.style.width = pct + '%';
+      bar.className   = 'bar-fill' + (week >= totalWeeks ? ' complete' : '');
+      label.textContent = `${week}/${totalWeeks}`;
+    });
+  }
+
+  async function refresh() {
+    try {
+      const res  = await fetch(HOST, { cache: 'no-store' });
+      const data = await res.json();
+
+      setLive(true);
+
+      document.getElementById('solutions').textContent  = fmtNum(data.solutions);
+      document.getElementById('sol-rate').textContent   = `${data.solPerHr.toFixed(2)} sol/hr`;
+      document.getElementById('elapsed').textContent    = fmtMs(data.elapsedMs);
+      document.getElementById('last-sol').textContent   = `last solution: ${fmtMs(data.sinceLastSolMs)} ago`;
+      document.getElementById('attempts').textContent   = fmtNum(data.attempts);
+      document.getElementById('att-rate').textContent   = `${fmtNum(Math.round(data.attPerMin))} att/min`;
+      document.getElementById('peak-week').textContent  = `${data.peakWeek}/${data.totalWeeks}`;
+      document.getElementById('threads-count').textContent = `${data.nThreads} thread${data.nThreads !== 1 ? 's' : ''}`;
+
+      buildThreadRows(data.threadWeeks, data.totalWeeks);
+
+      document.getElementById('last-updated').textContent =
+        `Last updated: ${new Date().toLocaleTimeString()}`;
+
+    } catch {
+      setLive(false);
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 1000);
+</script>
+
+</body>
+</html>

@@ -29,7 +29,7 @@ public class Config {
     // ----------------------------------------------------------------
     //  >>>  CHANGE THIS ONE LINE TO SWITCH CONFIGURATIONS  <<<
     // ----------------------------------------------------------------
-    public static final int ACTIVE_CONFIG = 3;
+    public static final int ACTIVE_CONFIG = 2;
     // ----------------------------------------------------------------
 
     // Config 1 — 16 teams, 4 Main + 2 BP + 2 Gerry  (current default)

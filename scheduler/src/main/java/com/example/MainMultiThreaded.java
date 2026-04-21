@@ -1,8 +1,11 @@
 package com.example;
 
+import com.sun.net.httpserver.HttpServer;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ public class MainMultiThreaded {
     // ── Metrics tracked across all threads ────────────────────────────────────
     private static final long          PROGRAM_START_MS = System.currentTimeMillis();
     private static final AtomicInteger solutionCount    = new AtomicInteger(0);
+    private static final AtomicInteger savedCount       = new AtomicInteger(0);
     private static final AtomicLong    lastSolutionMs   = new AtomicLong(System.currentTimeMillis());
     private static final AtomicLong    totalAttempts    = new AtomicLong(0);
     private static final AtomicInteger peakWeek         = new AtomicInteger(0);
@@ -59,6 +63,7 @@ public class MainMultiThreaded {
 
         // Start the live progress display before launching workers.
         startStatusDisplay(nThreads);
+        startMetricsServer(nThreads);
 
         ExecutorService pool = Executors.newFixedThreadPool(nThreads);
 
@@ -298,7 +303,7 @@ public class MainMultiThreaded {
                 long   now          = System.currentTimeMillis();
                 long   elapsed      = now - PROGRAM_START_MS;
                 long   sinceLastSol = now - lastSolutionMs.get();
-                int    sols         = solutionCount.get();
+                int    sols         = savedCount.get();
                 long   attempts     = totalAttempts.get();
                 double elapsedMin   = elapsed / 60_000.0;
                 double elapsedHr    = elapsed / 3_600_000.0;
@@ -352,6 +357,52 @@ public class MainMultiThreaded {
         statusThread.start();
     }
 
+    private static void startMetricsServer(int nThreads) {
+        try {
+            HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+            server.createContext("/metrics", exchange -> {
+                long now          = System.currentTimeMillis();
+                long elapsed      = now - PROGRAM_START_MS;
+                long sinceLastSol = now - lastSolutionMs.get();
+                int  sols         = savedCount.get();
+                long attempts     = totalAttempts.get();
+                double elapsedMin = elapsed / 60_000.0;
+                double elapsedHr  = elapsed / 3_600_000.0;
+                double solRate    = elapsedHr  > 0.001 ? sols     / elapsedHr  : 0.0;
+                double attRate    = elapsedMin > 0.001 ? attempts / elapsedMin : 0.0;
+                int    peak       = peakWeek.get() + 1;
+
+                StringBuilder tw = new StringBuilder("[");
+                for (int i = 0; i < nThreads; i++) {
+                    if (i > 0) tw.append(',');
+                    tw.append(threadCurrentWeek.get(i) + 1);
+                }
+                tw.append("]");
+
+                String json = String.format(
+                    "{\"elapsedMs\":%d,\"solutions\":%d,\"attempts\":%d," +
+                    "\"attPerMin\":%.1f,\"solPerHr\":%.2f,\"peakWeek\":%d," +
+                    "\"totalWeeks\":%d,\"sinceLastSolMs\":%d,\"nThreads\":%d," +
+                    "\"threadWeeks\":%s}",
+                    elapsed, sols, attempts, attRate, solRate, peak,
+                    WEEKS, sinceLastSol, nThreads, tw.toString()
+                );
+
+                byte[] bytes = json.getBytes();
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+            });
+            server.setExecutor(Executors.newSingleThreadExecutor());
+            server.start();
+        } catch (IOException e) {
+            System.err.println("Could not start metrics server: " + e.getMessage());
+        }
+    }
+
     private static String lbl(String label, String value) {
         return label + ": " + value;
     }
@@ -365,15 +416,23 @@ public class MainMultiThreaded {
 
     private static void writeSolution(MatchMatrix matches, int threadId, int solutionNum) {
 
+        // Run venue optimization first — pure computation, no I/O needed yet.
+        VenueOptimizer.OptResult venueResult = VenueOptimizer.optimize(matches);
+
+        // Only write files when at most 1 team is outside the venue target range
+        // (i.e. 15/16, 16/16, 13/14, 14/14).
+        // If venue optimization is unsupported (venueResult == null), always save.
+        if (venueResult != null && venueResult.teamsInRange < venueResult.nTeams - 1) {
+            return;
+        }
+
+        savedCount.incrementAndGet();
         lastSolutionMs.set(System.currentTimeMillis());
 
         String timestamp = LocalDateTime.now()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
         String filename  = "matches_"        + timestamp + "_t" + threadId + ".txt";
         String venueFile = "venue_schedule_" + timestamp + "_t" + threadId + ".txt";
-
-        // Run venue optimization outside the lock — pure computation, no I/O
-        VenueOptimizer.OptResult venueResult = VenueOptimizer.optimize(matches);
 
         synchronized (outputLock) {
             try (PrintStream fileOut = new PrintStream(new FileOutputStream(filename))) {
