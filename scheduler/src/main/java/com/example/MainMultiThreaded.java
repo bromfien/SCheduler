@@ -5,11 +5,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +46,15 @@ public class MainMultiThreaded {
     // Serialises all console output and System.setOut redirects.
     private static final Object outputLock = new Object();
 
+    // Metrics pushed from remote instances, keyed by instanceId.
+    private static final ConcurrentHashMap<String, PushedInstance> pushedMetrics = new ConcurrentHashMap<>();
+
+    private static class PushedInstance {
+        final String json;
+        final long   receivedAt;
+        PushedInstance(String json, long receivedAt) { this.json = json; this.receivedAt = receivedAt; }
+    }
+
     static {
         preComputeTable();
     }
@@ -64,6 +78,9 @@ public class MainMultiThreaded {
         // Start the live progress display before launching workers.
         startStatusDisplay(nThreads);
         startMetricsServer(nThreads);
+
+        String aggregatorUrl = System.getProperty("aggregator");
+        if (aggregatorUrl != null) startMetricsPush(aggregatorUrl, nThreads);
 
         ExecutorService pool = Executors.newFixedThreadPool(nThreads);
 
@@ -357,50 +374,122 @@ public class MainMultiThreaded {
         statusThread.start();
     }
 
+    private static String buildMetricsJson(int nThreads) {
+        long   now          = System.currentTimeMillis();
+        long   elapsed      = now - PROGRAM_START_MS;
+        long   sinceLastSol = now - lastSolutionMs.get();
+        int    sols         = savedCount.get();
+        long   attempts     = totalAttempts.get();
+        double elapsedMin   = elapsed / 60_000.0;
+        double elapsedHr    = elapsed / 3_600_000.0;
+        double solRate      = elapsedHr  > 0.001 ? sols     / elapsedHr  : 0.0;
+        double attRate      = elapsedMin > 0.001 ? attempts / elapsedMin : 0.0;
+        int    peak         = peakWeek.get() + 1;
+
+        StringBuilder tw = new StringBuilder("[");
+        for (int i = 0; i < nThreads; i++) {
+            if (i > 0) tw.append(',');
+            tw.append(threadCurrentWeek.get(i) + 1);
+        }
+        tw.append("]");
+
+        String hostname;
+        try { hostname = InetAddress.getLocalHost().getHostName(); }
+        catch (Exception e) { hostname = "unknown"; }
+
+        return String.format(
+            "{\"instanceId\":\"%s\",\"elapsedMs\":%d,\"solutions\":%d,\"attempts\":%d," +
+            "\"attPerMin\":%.1f,\"solPerHr\":%.2f,\"peakWeek\":%d," +
+            "\"totalWeeks\":%d,\"sinceLastSolMs\":%d,\"nThreads\":%d," +
+            "\"threadWeeks\":%s}",
+            hostname, elapsed, sols, attempts, attRate, solRate, peak,
+            WEEKS, sinceLastSol, nThreads, tw.toString()
+        );
+    }
+
+    private static String extractStringField(String json, String field) {
+        String key = "\"" + field + "\":\"";
+        int start  = json.indexOf(key);
+        if (start < 0) return "unknown";
+        start += key.length();
+        int end = json.indexOf('"', start);
+        return end < 0 ? "unknown" : json.substring(start, end);
+    }
+
     private static void startMetricsServer(int nThreads) {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+
+            // /metrics — local instance stats (backwards compatible)
             server.createContext("/metrics", exchange -> {
-                long now          = System.currentTimeMillis();
-                long elapsed      = now - PROGRAM_START_MS;
-                long sinceLastSol = now - lastSolutionMs.get();
-                int  sols         = savedCount.get();
-                long attempts     = totalAttempts.get();
-                double elapsedMin = elapsed / 60_000.0;
-                double elapsedHr  = elapsed / 3_600_000.0;
-                double solRate    = elapsedHr  > 0.001 ? sols     / elapsedHr  : 0.0;
-                double attRate    = elapsedMin > 0.001 ? attempts / elapsedMin : 0.0;
-                int    peak       = peakWeek.get() + 1;
-
-                StringBuilder tw = new StringBuilder("[");
-                for (int i = 0; i < nThreads; i++) {
-                    if (i > 0) tw.append(',');
-                    tw.append(threadCurrentWeek.get(i) + 1);
-                }
-                tw.append("]");
-
-                String json = String.format(
-                    "{\"elapsedMs\":%d,\"solutions\":%d,\"attempts\":%d," +
-                    "\"attPerMin\":%.1f,\"solPerHr\":%.2f,\"peakWeek\":%d," +
-                    "\"totalWeeks\":%d,\"sinceLastSolMs\":%d,\"nThreads\":%d," +
-                    "\"threadWeeks\":%s}",
-                    elapsed, sols, attempts, attRate, solRate, peak,
-                    WEEKS, sinceLastSol, nThreads, tw.toString()
-                );
-
-                byte[] bytes = json.getBytes();
+                byte[] bytes = buildMetricsJson(nThreads).getBytes();
                 exchange.getResponseHeaders().add("Content-Type", "application/json");
                 exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
                 exchange.sendResponseHeaders(200, bytes.length);
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(bytes);
-                }
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
             });
-            server.setExecutor(Executors.newSingleThreadExecutor());
+
+            // /push — accept metrics from a remote instance
+            server.createContext("/push", exchange -> {
+                if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                    exchange.sendResponseHeaders(405, -1);
+                    return;
+                }
+                String body       = new String(exchange.getRequestBody().readAllBytes());
+                String instanceId = extractStringField(body, "instanceId");
+                pushedMetrics.put(instanceId, new PushedInstance(body, System.currentTimeMillis()));
+                exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(204, -1);
+            });
+
+            // /all-metrics — local + all live pushed instances
+            server.createContext("/all-metrics", exchange -> {
+                String localJson  = buildMetricsJson(nThreads);
+                String localId    = extractStringField(localJson, "instanceId");
+                StringBuilder all = new StringBuilder("{");
+                all.append("\"").append(localId).append("\":").append(localJson);
+                long now = System.currentTimeMillis();
+                for (Map.Entry<String, PushedInstance> e : pushedMetrics.entrySet()) {
+                    if (now - e.getValue().receivedAt < 10_000) {
+                        all.append(",\"").append(e.getKey()).append("\":").append(e.getValue().json);
+                    }
+                }
+                all.append("}");
+                byte[] bytes = all.toString().getBytes();
+                exchange.getResponseHeaders().add("Content-Type", "application/json");
+                exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+            });
+
+            server.setExecutor(Executors.newFixedThreadPool(2));
             server.start();
         } catch (IOException e) {
             System.err.println("Could not start metrics server: " + e.getMessage());
         }
+    }
+
+    private static void startMetricsPush(String aggregatorUrl, int nThreads) {
+        Thread t = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    byte[]            body = buildMetricsJson(nThreads).getBytes();
+                    HttpURLConnection conn = (HttpURLConnection)
+                        URI.create(aggregatorUrl).toURL().openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setConnectTimeout(3000);
+                    conn.setReadTimeout(3000);
+                    try (OutputStream os = conn.getOutputStream()) { os.write(body); }
+                    conn.getResponseCode();
+                    conn.disconnect();
+                } catch (Exception ignored) {}
+                try { Thread.sleep(2000); } catch (InterruptedException e) { break; }
+            }
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     private static String lbl(String label, String value) {
