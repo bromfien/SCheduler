@@ -15,107 +15,125 @@
       padding: 2rem;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 2rem;
-    }
-
     h1 {
       font-size: 1.5rem;
       font-weight: 600;
       color: #f8fafc;
+      margin-bottom: 2rem;
     }
 
-    #status-dot {
-      width: 10px;
-      height: 10px;
+    .instances {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 2rem;
+    }
+
+    .instance {
+      background: #161822;
+      border: 1px solid #2d3148;
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .instance-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .instance-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #ef4444;
-      display: inline-block;
-      margin-right: 0.5rem;
       transition: background 0.3s;
+      flex-shrink: 0;
     }
-    #status-dot.live { background: #22c55e; animation: pulse 2s infinite; }
+    .dot.live { background: #22c55e; animation: pulse 2s infinite; }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50%       { opacity: 0.4; }
     }
 
-    #status-label { font-size: 0.85rem; color: #94a3b8; }
-
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
     .card {
       background: #1e2130;
       border: 1px solid #2d3148;
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
     }
 
     .card-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #64748b;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
     }
 
     .card-value {
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: #f1f5f9;
       font-variant-numeric: tabular-nums;
     }
 
     .card-sub {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: #475569;
-      margin-top: 0.25rem;
+      margin-top: 0.2rem;
     }
 
     .card.highlight { border-color: #3b82f6; }
     .card.highlight .card-value { color: #60a5fa; }
-
     .card.success { border-color: #22c55e; }
     .card.success .card-value { color: #4ade80; }
 
-    /* Thread progress */
-    .threads-card {
-      background: #1e2130;
-      border: 1px solid #2d3148;
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
-    }
+    .threads-section { margin-top: 0.75rem; }
 
     .threads-title {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #64748b;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
 
     .thread-row {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.6rem;
+      gap: 0.6rem;
+      margin-bottom: 0.5rem;
     }
 
     .thread-label {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #94a3b8;
-      width: 2.5rem;
+      width: 2rem;
       flex-shrink: 0;
     }
 
@@ -123,7 +141,7 @@
       flex: 1;
       background: #2d3148;
       border-radius: 999px;
-      height: 8px;
+      height: 7px;
       overflow: hidden;
     }
 
@@ -133,137 +151,148 @@
       background: linear-gradient(90deg, #3b82f6, #60a5fa);
       transition: width 0.4s ease;
     }
-
     .bar-fill.complete { background: linear-gradient(90deg, #16a34a, #4ade80); }
 
     .week-label {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #475569;
-      width: 3rem;
+      width: 2.5rem;
       text-align: right;
       flex-shrink: 0;
     }
 
+    .offline-msg {
+      text-align: center;
+      color: #334155;
+      font-size: 0.85rem;
+      padding: 2rem 0;
+    }
+
     #last-updated {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #334155;
       text-align: right;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Scheduler Live Dashboard</h1>
-  <div>
-    <span id="status-dot"></span>
-    <span id="status-label">Connecting...</span>
-  </div>
-</header>
+<h1>Scheduler Dashboard</h1>
 
-<div class="grid">
-  <div class="card highlight">
-    <div class="card-label">Solutions Found</div>
-    <div class="card-value" id="solutions">—</div>
-    <div class="card-sub" id="sol-rate">— sol/hr</div>
+<div class="instances">
+  <div class="instance" id="instance-local">
+    <div class="instance-header">
+      <span class="instance-name">Local Machine</span>
+      <div class="status-badge">
+        <span class="dot" id="dot-local"></span>
+        <span id="label-local">Connecting...</span>
+      </div>
+    </div>
+    <div id="body-local"><div class="offline-msg">Waiting for connection...</div></div>
   </div>
-  <div class="card">
-    <div class="card-label">Running</div>
-    <div class="card-value" id="elapsed">—</div>
-    <div class="card-sub" id="last-sol">last solution: —</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Total Attempts</div>
-    <div class="card-value" id="attempts">—</div>
-    <div class="card-sub" id="att-rate">— att/min</div>
-  </div>
-  <div class="card success">
-    <div class="card-label">Peak Week</div>
-    <div class="card-value" id="peak-week">—</div>
-    <div class="card-sub" id="threads-count">— threads</div>
-  </div>
-</div>
 
-<div class="threads-card">
-  <div class="threads-title">Thread Progress</div>
-  <div id="threads-container"></div>
+  <div class="instance" id="instance-vm">
+    <div class="instance-header">
+      <span class="instance-name">Cloud VM</span>
+      <div class="status-badge">
+        <span class="dot" id="dot-vm"></span>
+        <span id="label-vm">Connecting...</span>
+      </div>
+    </div>
+    <div id="body-vm"><div class="offline-msg">Waiting for connection...</div></div>
+  </div>
 </div>
 
 <div id="last-updated"></div>
 
 <script>
-  const HOST = `http://${location.hostname}:8080/metrics`;
+  const SOURCES = {
+    local: 'http://localhost:8080/metrics',
+    vm:    'http://bromfien.duckdns.org:8080/metrics',
+  };
 
   function fmtMs(ms) {
-    const s = Math.floor(Math.max(ms, 0) / 1000);
-    const h = Math.floor(s / 3600).toString().padStart(2, '0');
-    const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+    const s  = Math.floor(Math.max(ms, 0) / 1000);
+    const h  = Math.floor(s / 3600).toString().padStart(2, '0');
+    const m  = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
     const sc = (s % 60).toString().padStart(2, '0');
     return `${h}:${m}:${sc}`;
   }
 
-  function fmtNum(n) {
-    return n.toLocaleString();
-  }
+  function fmtNum(n) { return Math.round(n).toLocaleString(); }
 
-  function setLive(ok) {
-    const dot   = document.getElementById('status-dot');
-    const label = document.getElementById('status-label');
-    dot.className   = ok ? 'live' : '';
-    label.textContent = ok ? 'Live' : 'Disconnected';
-  }
+  function renderBody(key, data) {
+    const totalWeeks = data.totalWeeks;
 
-  function buildThreadRows(threadWeeks, totalWeeks) {
-    const container = document.getElementById('threads-container');
-    // Add rows if needed
-    while (container.children.length < threadWeeks.length) {
-      const i = container.children.length;
-      container.insertAdjacentHTML('beforeend', `
+    const threadRows = data.threadWeeks.map((week, i) => {
+      const pct      = Math.min((week / totalWeeks) * 100, 100).toFixed(1);
+      const complete = week >= totalWeeks ? ' complete' : '';
+      return `
         <div class="thread-row">
           <span class="thread-label">T${i}</span>
-          <div class="bar-track"><div class="bar-fill" id="bar-${i}"></div></div>
-          <span class="week-label" id="wk-${i}">—</span>
-        </div>`);
-    }
-    threadWeeks.forEach((week, i) => {
-      const pct   = Math.min((week / totalWeeks) * 100, 100);
-      const bar   = document.getElementById(`bar-${i}`);
-      const label = document.getElementById(`wk-${i}`);
-      bar.style.width = pct + '%';
-      bar.className   = 'bar-fill' + (week >= totalWeeks ? ' complete' : '');
-      label.textContent = `${week}/${totalWeeks}`;
-    });
+          <div class="bar-track"><div class="bar-fill${complete}" style="width:${pct}%"></div></div>
+          <span class="week-label">${week}/${totalWeeks}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="grid">
+        <div class="card highlight">
+          <div class="card-label">Solutions</div>
+          <div class="card-value">${fmtNum(data.solutions)}</div>
+          <div class="card-sub">${data.solPerHr.toFixed(2)} sol/hr</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Running</div>
+          <div class="card-value">${fmtMs(data.elapsedMs)}</div>
+          <div class="card-sub">last: ${fmtMs(data.sinceLastSolMs)} ago</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Attempts</div>
+          <div class="card-value">${fmtNum(data.attempts)}</div>
+          <div class="card-sub">${fmtNum(data.attPerMin)} att/min</div>
+        </div>
+        <div class="card success">
+          <div class="card-label">Peak Week</div>
+          <div class="card-value">${data.peakWeek}/${totalWeeks}</div>
+          <div class="card-sub">${data.nThreads} thread${data.nThreads !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <div class="threads-section">
+        <div class="threads-title">Thread Progress</div>
+        ${threadRows}
+      </div>`;
   }
 
-  async function refresh() {
+  async function refresh(key) {
+    const dot   = document.getElementById(`dot-${key}`);
+    const label = document.getElementById(`label-${key}`);
+    const body  = document.getElementById(`body-${key}`);
+
     try {
-      const res  = await fetch(HOST, { cache: 'no-store' });
+      const res  = await fetch(SOURCES[key], { cache: 'no-store', signal: AbortSignal.timeout(3000) });
       const data = await res.json();
 
-      setLive(true);
-
-      document.getElementById('solutions').textContent  = fmtNum(data.solutions);
-      document.getElementById('sol-rate').textContent   = `${data.solPerHr.toFixed(2)} sol/hr`;
-      document.getElementById('elapsed').textContent    = fmtMs(data.elapsedMs);
-      document.getElementById('last-sol').textContent   = `last solution: ${fmtMs(data.sinceLastSolMs)} ago`;
-      document.getElementById('attempts').textContent   = fmtNum(data.attempts);
-      document.getElementById('att-rate').textContent   = `${fmtNum(Math.round(data.attPerMin))} att/min`;
-      document.getElementById('peak-week').textContent  = `${data.peakWeek}/${data.totalWeeks}`;
-      document.getElementById('threads-count').textContent = `${data.nThreads} thread${data.nThreads !== 1 ? 's' : ''}`;
-
-      buildThreadRows(data.threadWeeks, data.totalWeeks);
-
-      document.getElementById('last-updated').textContent =
-        `Last updated: ${new Date().toLocaleTimeString()}`;
+      dot.className   = 'dot live';
+      label.textContent = 'Live';
+      body.innerHTML  = renderBody(key, data);
 
     } catch {
-      setLive(false);
+      dot.className   = 'dot';
+      label.textContent = 'Offline';
+      body.innerHTML  = '<div class="offline-msg">Not reachable</div>';
     }
   }
 
-  refresh();
-  setInterval(refresh, 1000);
+  async function refreshAll() {
+    await Promise.all(Object.keys(SOURCES).map(refresh));
+    document.getElementById('last-updated').textContent =
+      `Last updated: ${new Date().toLocaleTimeString()}`;
+  }
+
+  refreshAll();
+  setInterval(refreshAll, 1000);
 </script>
 
 </body>
