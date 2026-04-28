@@ -418,6 +418,8 @@ public class MainMultiThreaded {
 
     private static void startMetricsServer(int nThreads) {
         try {
+            System.setProperty("sun.net.httpserver.maxReqTime", "5");
+            System.setProperty("sun.net.httpserver.maxRspTime", "5");
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
             // /metrics — local instance stats (backwards compatible)
