@@ -22,6 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLong;
 
+// to run perform the following command in the terminal:
+// go to scheduler directory and run the following command:
+// mvn exec:java -Daggregator=http://bromfien.duckdns.org:8080/push
+
 public class MainMultiThreaded {
 
     private static final int MATCHES_PER_WEEK = MatchMatrix.MATCHES_PER_WEEK;
