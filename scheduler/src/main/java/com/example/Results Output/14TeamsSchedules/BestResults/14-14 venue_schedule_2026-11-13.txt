@@ -1,0 +1,36 @@
+		Main 1	Main 2	Main 3	BP 1	BP 2	Gerry 1	Gerry 2
+Week 1	T 5 vs T 6	T 4 vs T10	T11 vs T13	T 1 vs T14	T 8 vs T12	T 3 vs T 7	T 2 vs T 9
+Week 1	T 6 vs T10	T 5 vs T13	T 4 vs T11	T12 vs T14	T 1 vs T 8	T 7 vs T 9	T 2 vs T 3
+Week 2	T 2 vs T12	T 7 vs T10	T 9 vs T14	T 6 vs T 8	T 4 vs T 5	T 3 vs T13	T 1 vs T11
+Week 2	T 7 vs T12	T 2 vs T14	T 9 vs T10	T 5 vs T 8	T 4 vs T 6	T 1 vs T13	T 3 vs T11
+Week 3	T 1 vs T 7	T11 vs T14	T 3 vs T 8	T 4 vs T 9	T 6 vs T13	T 2 vs T10	T 5 vs T12
+Week 3	T 7 vs T14	T 1 vs T 3	T 8 vs T11	T 6 vs T 9	T 4 vs T13	T10 vs T12	T 2 vs T 5
+Week 4	T 3 vs T 9	T12 vs T13	T 1 vs T 6	T 2 vs T 7	T 5 vs T11	T 4 vs T 8	T10 vs T14
+Week 4	T 9 vs T13	T 3 vs T 6	T 1 vs T12	T 5 vs T 7	T 2 vs T11	T 8 vs T10	T 4 vs T14
+Week 5	T 2 vs T 8	T 1 vs T 4	T 5 vs T 9	T11 vs T12	T 3 vs T10	T 6 vs T 7	T13 vs T14
+Week 5	T 8 vs T 9	T 2 vs T 4	T 1 vs T 5	T 3 vs T12	T10 vs T11	T 7 vs T13	T 6 vs T14
+Week 6	T 3 vs T 5	T 4 vs T 7	T 8 vs T14	T 2 vs T13	T 1 vs T10	T 9 vs T12	T 6 vs T11
+Week 6	T 5 vs T14	T 3 vs T 4	T 7 vs T 8	T10 vs T13	T 1 vs T 2	T 6 vs T12	T 9 vs T11
+
+TARGETS  Main 4–6   BP 2–4   Gerry 2–4   (per team, 12 games)
+Optimality score (sum of squared deviations): 36.6
+
+TEAM VENUE COUNTS
+  Team     Main     BP  Gerry  Total  Status
+  -----------------------------------------
+  T 1       6      4      2     12  ✓
+  T 2       4      4      4     12  ✓
+  T 3       6      2      4     12  ✓
+  T 4       6      4      2     12  ✓
+  T 5       6      4      2     12  ✓
+  T 6       4      4      4     12  ✓
+  T 7       6      2      4     12  ✓
+  T 8       6      4      2     12  ✓
+  T 9       6      2      4     12  ✓
+  T10       4      4      4     12  ✓
+  T11       4      4      4     12  ✓
+  T12       4      4      4     12  ✓
+  T13       4      4      4     12  ✓
+  T14       6      2      4     12  ✓
+  -----------------------------------------
+  Teams within target range:  14/14
